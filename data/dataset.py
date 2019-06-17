@@ -3,7 +3,7 @@ from torch.utils.data.dataloader import  Dataset
 
 
 
-class Dataset(Dataset):
+class CombinedDataset(Dataset):
     def __init__(self, sensor1, sensor2):
         self.dataset1 = sensor1
         self.dataset2 = sensor2

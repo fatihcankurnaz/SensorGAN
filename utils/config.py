@@ -4,10 +4,8 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 
-import os
 import yaml
 
-import numpy as np
 from easydict import EasyDict
 
 config = EasyDict()
@@ -21,7 +19,7 @@ config.DATALOADER.SENSOR1_PATH = ""
 config.DATALOADER.SENSOR2_PATH = ""
 
 config.SENSOR1_GENERATOR = EasyDict()
-config.SENSOR1_GENERATOR.BASE_LR = 0.0001
+config.SENSOR1_GENERATOR.BASE_LR = 0.0006
 
 config.SENSOR1_DISCRIMINATOR = EasyDict()
 config.SENSOR1_DISCRIMINATOR.BASE_LR = 0.0001
@@ -39,16 +37,26 @@ config.TRAIN.MAX_EPOCH = 1000
 config.TRAIN.LOAD_WEIGHTS = ""
 config.TRAIN.SAVE_WEIGHTS = ""
 
-def load_config(config_file):
-    with open(config_file,"r") as f:
-        
-        
-        my_config = yaml.load(file(f, 'r'))
 
-        for i in my_config:
-            if i in config:
-                config.i = my_config[i]
-            else:
-                raise ValueError(i," is not one of the config variables")
+def update_config_secondaries(left, right):
+    for i,k in right.items():
+        print(i)
+        config[left][i] = k
+
+
+def load_config(config_file):
+    if config_file is not None:
+        with open(config_file,"r") as f:
+            my_config = EasyDict(yaml.load(f))
+
+            for i, k in my_config.items():
+
+                if i in config:
+                    if isinstance(k, EasyDict):
+                        update_config_secondaries(i,k)
+                    else:
+                        config[i] = k
+                else:
+                    raise ValueError(i, " is not one of the config variables")
 
 
