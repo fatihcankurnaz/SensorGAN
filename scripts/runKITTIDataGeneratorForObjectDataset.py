@@ -1,10 +1,13 @@
 import os.path
 import time
-import visualizer
+
 import numpy as np
 import pickle
 import PC2ImageConverter
 import matplotlib.pyplot as plt
+
+
+from visualizer import Vis
 
 def decomposeCloud(rawCloud, verbose=False):
     # decompose cloud
@@ -59,7 +62,7 @@ def parseBB3D(curr_path, bb3D_path):
     '''
     pathName, tempName = os.path.split(curr_path)
     currFileName, _ = tempName.split(".")
-    bbFileName = bb3D_path + currFileName.replace('full_label', 'bb3d') + ".bin"
+    bbFileName = bb3D_path #+ currFileName.replace('full_label', 'bb3d') + ".bin"
     boundingbox_3d = []
     if os.path.exists(bbFileName):
         boundingbox_3d = loadBoundingBox(bbFileName)
@@ -97,7 +100,7 @@ def processData(cloudName, bb3D_path, PC2ImgConv, outputFileName):
     timeStart = time.time()
 
     # load pc
-    colorizedPC = np.load(cloudName)  # colorizedPC has 7 columns [x y z i 'LabelStr' image_x image_y]
+    colorizedPC = np.load(cloudName,allow_pickle=True)  # colorizedPC has 7 columns [x y z i 'LabelStr' image_x image_y]
     # add label column
     labeledPC = insertLabelColumn(colorizedPC)  # labeledPC has now 8 columns [x y z i 'LabelStr' LabelID image_x image_y]
 
@@ -109,9 +112,9 @@ def processData(cloudName, bb3D_path, PC2ImgConv, outputFileName):
     print(" bevImage generation took  " + str(timeElapsed))
 
     if False:
-        visualizer = visualizer.Vis()
+        visualizer = Vis()
         # get bounding boxes
-        bb3D = parseBB3D(cloudName,bb3D_path)
+        bb3D = parseBB3D(cloudName,bb3D_path)#bb3D_path
 
         if bb3D is not None:
             # decompose cloud into object clouds
@@ -119,9 +122,9 @@ def processData(cloudName, bb3D_path, PC2ImgConv, outputFileName):
 
             visualizer.showCloudsWithBBs(orgPC=backgrdCloud, fovPC=bevCloud,  roadPC=roadCloud,
                                          vehPC=vehCloud, pedPC=pedCloud, cycPC=cycCloud, bb3D=bb3D,
-                                         fileName=outputFileName)
+                                         fileName="")
 
-    if False:
+    if True:
         fig, axes = plt.subplots(6, 1, sharey=True)
         for r in range(0, 6):
             axes[r].imshow(bevImage[:, :, r])
@@ -162,6 +165,7 @@ def main():
 
     frame_no=10
     currCloudFullPathName = cloud_list[frame_no]
+    print(currCloudFullPathName)
     _, fullCloudName = os.path.split(currCloudFullPathName)
     currCloudName, _ = fullCloudName.split(".")
     outputFileName = output_path + currCloudName.replace('full_label', 'cloud') + ".png"
