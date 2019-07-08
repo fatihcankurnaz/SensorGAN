@@ -8,9 +8,7 @@ utils/__pycache__/*
 # Distribution / packaging
 .Python
 env/
-scripts/output/
 build/
-PSPNet-tensorflow/
 develop-eggs/
 dist/
 downloads/

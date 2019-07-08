@@ -136,7 +136,7 @@ class Vis(object):
                           colormap="spectral", scale_factor=self.pointSize)
 
         self.draw_3D_bboxes(bb3D, figure, draw_text=False)
-
+        print("FIIIIIIIIIII",fileName)
         # set camera parameters
         figure.scene.camera.zoom(zoomFactor)
         figure.scene.camera.azimuth(azimuthAngle)

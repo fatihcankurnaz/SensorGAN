@@ -10,9 +10,11 @@ import optparse
 from utils.config import config
 from data.dataloader import DataLoader
 from utils.config import load_config
+from .Generator import Generator
 
 import torch.optim as optim
 import torch.nn as nn
+
 
 
 parser = optparse.OptionParser()
@@ -35,8 +37,8 @@ def trian(dataloader,config):
     real_sample_label = 1
     fake_sample_label = 0
 
-    sensor1_gen = Generator(...).to(device)
-    sensor2_gen = Generator(...).to(device)
+    sensor1_gen = Generator(1,5).to(device)
+    sensor2_gen = Generator(1,5).to(device)
     sensor1_dis = Discriminator(...).to(device)
     sensor2_dis = Discriminator(...).to(device)
 
@@ -45,6 +47,9 @@ def trian(dataloader,config):
     optimizer_sensor2_gen = optim.Adam(sensor2_gen.parameters(), lr=config.SENSOR2_GENERATOR.BASE_LR)
     optimizer_sensor1_dis = optim.Adam(sensor1_dis.parameters(), lr=config.SENSOR1_DISCRIMINATOR.BASE_LR)
     optimizer_sensor2_dis = optim.Adam(sensor2_dis.parameters(), lr=config.SENSOR2_DISCRIMINATOR.BASE_LR)
+
+
+
 
 
 def main(opts):

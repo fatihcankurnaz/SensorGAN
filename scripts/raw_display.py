@@ -12,12 +12,21 @@ from os.path import join, isdir
 import random
 from runKITTIDataGeneratorForObjectDataset import processData
 import PC2ImageConverter
+import time
+
 
 
 from matplotlib.pyplot import figure
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 
+import sys
+sys.path.insert(0, '/home/fatih/other_git/PSPNet-tensorflow')
+
+#import myscript
+#
+from model import PSPNet101, PSPNet50
+from tools import *
 
 image_root_path = "/SPACE/kan/Data/KITTI_raw_data/kitti/2011_09_26"
 trans_root_path = "/SPACE/kan/Data/KITTI_labeledPC_with_BBs/TransformationMatrix"
@@ -25,6 +34,22 @@ bbs2d_root_path = "/SPACE/kan/Data/KITTI_labeledPC_with_BBs/BBs_2d/2011_09_26"
 bbs3d_root_path = "/SPACE/kan/Data/KITTI_labeledPC_with_BBs/BBs_3d/2011_09_26"
 label_root_path = "/SPACE/kan/Data/KITTI_labeledPC_with_BBs/2011_09_26"
 
+
+
+ADE20k_param = {'crop_size': [473, 473],
+                'num_classes': 150,
+                'model': PSPNet50,
+                'weights_path': './model/pspnet50-ade20k/model.ckpt-0'}
+
+cityscapes_param = {'crop_size': [1242, 375],
+                    'num_classes': 19,
+                    'model': PSPNet101,
+                    'weights_path': "/home/fatih/other_git/PSPNet-tensorflow/model/pspnet101-cityscapes/model.ckpt-0"}
+
+IMAGE_MEAN = np.array((94.5192887,  99.58598114, 94.95947993), dtype=np.float32)
+
+
+param = cityscapes_param
 def cart2hom( pts_3d,col =1):
     ''' Input: nx3 points in Cartesian
         Oupput: nx4 points in Homogeneous by pending col, default is 1
@@ -50,15 +75,19 @@ def loadBoundingBox(boundingBox):
 
 def plot_full_label(velo_full, image):
     mycolors = {
-        'road': (255, 0, 0),
-        'car': (255, 255, 0),
-        'person': (0, 255, 0),
-        'cyclist': (0, 255, 255),
+        'road': (128, 64, 128),
+        'car': (119, 10, 32),
+        'person': (219, 19, 60),
+        'cyclist': (0, 0, 142),
+        'None': (69, 69, 69),
     }
 
     for i in velo_full:
         x, y, z, i, label, u, v = i
         if label != 'None':
+            if label not in mycolors.keys(): print('error point', i, '\n error label', velo_full[int(i[2]), :])
+            cv2.circle(img=image, center=(int(u), int(v)), radius=2, thickness=-1, color=mycolors[label])
+        else:
             if label not in mycolors.keys(): print('error point', i, '\n error label', velo_full[int(i[2]), :])
             cv2.circle(img=image, center=(int(u), int(v)), radius=2, thickness=-1, color=mycolors[label])
 
@@ -82,10 +111,10 @@ def GT_3d_image(image, boundingbox):
                          (int(corner[0][k[1]]), int(corner[1][k[1]])),
                          type_c[label], 2)
 
-    #plt.title("3D Tracklet display on image")
-    #plt.axis('off')
-    #plt.imshow(image)
-    #plt.show()
+    plt.title("3D Tracklet display on image")
+    plt.axis('off')
+    plt.imshow(image)
+    plt.show()
     return image
 
 
@@ -97,13 +126,13 @@ def GT_3d_image(image, boundingbox):
 
 def random_paths():
 
-    rand = random.randint(1, 12919)
+    rand = 200#random.randint(1, 12919)
     count = 0
-    for run in listdir(image_root_path):
+    for run in sorted(listdir(image_root_path) ):
         if isdir(join(image_root_path, run)):
 
             left_image_directory = join(image_root_path, run + "/image_02/data")
-            for current_image in listdir(left_image_directory):
+            for current_image in sorted(listdir(left_image_directory) ):
 
                 left_image_path= join(left_image_directory, current_image)
 
@@ -133,6 +162,65 @@ def random_paths():
 
     return "", "", "", "", "", ""
 
+
+
+
+class PspInference:
+    def __init__(self,image_path):
+        self.img_path = image_path
+        img_np, filename = load_img(self.img_path)
+        img_shape = tf.shape(img_np)
+        h, w = (tf.maximum(param['crop_size'][0], img_shape[0]), tf.maximum(param['crop_size'][1], img_shape[1]))
+        img = preprocess(img_np, h, w)
+
+        self.PSPNet = param['model']
+        self.net = self.PSPNet({'data': img}, is_training=False, num_classes=param['num_classes'])
+
+        self.raw_output = self.net.layers['conv6']
+
+        # Predictions.
+        self.raw_output_up = tf.image.resize_bilinear(self.raw_output, size=[h, w], align_corners=True)
+        self.raw_output_up = tf.image.crop_to_bounding_box(self.raw_output_up, 0, 0, img_shape[0], img_shape[1])
+        self.raw_output_up = tf.argmax(self.raw_output_up, dimension=3)
+        self.pred = decode_labels(self.raw_output_up, img_shape, param['num_classes'])
+
+        # Init tf Session
+        self.config = tf.ConfigProto()
+        self.config.gpu_options.allow_growth = True
+        self.sess = tf.Session(config=self.config)
+        self.init = tf.global_variables_initializer()
+
+        self.sess.run(self.init)
+
+        self.ckpt_path = param['weights_path']
+        self.loader = tf.train.Saver(var_list=tf.global_variables())
+        self.loader.restore(self.sess, self.ckpt_path)
+        print("Restored model parameters from {}".format(self.ckpt_path))
+    def infer(self):
+        start = time.time()
+        preds = self.sess.run(self.pred)
+        # given_count += 1
+        #print(self.pred)
+        end = time.time()
+        print(end - start)
+        res = preds[0]/255
+        return res
+
+    def update_image(self, image_path):
+        self.img_path = image_path
+        img_np, filename = load_img(self.img_path)
+        img_shape = tf.shape(img_np)
+        h, w = (tf.maximum(param['crop_size'][0], img_shape[0]), tf.maximum(param['crop_size'][1], img_shape[1]))
+        img = preprocess(img_np, h, w)
+        with tf.variable_scope('', reuse=tf.AUTO_REUSE):
+            self.net = self.PSPNet({'data': img}, is_training=False, num_classes=param['num_classes'])
+
+        self.raw_output = self.net.layers['conv6']
+        # Predictions.
+        self.raw_output_up = tf.image.resize_bilinear(self.raw_output, size=[h, w], align_corners=True)
+        self.raw_output_up = tf.image.crop_to_bounding_box(self.raw_output_up, 0, 0, img_shape[0], img_shape[1])
+        self.raw_output_up = tf.argmax(self.raw_output_up, dimension=3)
+        self.pred = decode_labels(self.raw_output_up, img_shape, param['num_classes'])
 
 def main():
     paths = random_paths()
@@ -176,10 +264,11 @@ def main():
                                                    xGridSize=0.2, yGridSize=0.3, zGridSize=0.3, maxImgHeight=64,
                                                    maxImgWidth=256, maxImgDepth=64)
     outputFileName = "./output/Cloud.png"
+    myPsp = PspInference(left_image_path)
     processData(_labeled_velo, _Boundingbox_3d, PC2ImgConv, outputFileName)
-    figure(num=None, figsize=(25, 12), dpi=100, facecolor='w', edgecolor='k')
+
     left_image = mpimg.imread(left_image_path)
-    right_image = mpimg.imread(right_image_path)
+    right_image = myPsp.infer()
     bird_eye_image = mpimg.imread(outputFileName)
     overlayed_image = mpimg.imread(vis_fov_img)
     fig = plt.figure(num=None, figsize=(25, 12), dpi=100, facecolor='w', edgecolor='k')
@@ -192,7 +281,7 @@ def main():
     plt.subplot(2, 2, 2)
     plt.imshow(right_image)
     plt.axis("off")
-    plt.title("RIGHT IMAGE")
+    plt.title("SEMANTIC SEGMENTATION")
     plt.subplot(2, 2, 3)
     plt.imshow(bird_eye_image)
     plt.axis("off")

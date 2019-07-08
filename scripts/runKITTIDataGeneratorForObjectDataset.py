@@ -111,20 +111,20 @@ def processData(cloudName, bb3D_path, PC2ImgConv, outputFileName):
     timeElapsed = time.time() - timeStart
     print(" bevImage generation took  " + str(timeElapsed))
 
-    if False:
+    if True:
         visualizer = Vis()
         # get bounding boxes
         bb3D = parseBB3D(cloudName,bb3D_path)#bb3D_path
 
         if bb3D is not None:
             # decompose cloud into object clouds
-            backgrdCloud, roadCloud, vehCloud, pedCloud, cycCloud = decomposeCloud(colorizedPC, verbose=False)
+            backgrdCloud, roadCloud, vehCloud, pedCloud, cycCloud = decomposeCloud(colorizedPC, verbose=True)
 
             visualizer.showCloudsWithBBs(orgPC=backgrdCloud, fovPC=bevCloud,  roadPC=roadCloud,
                                          vehPC=vehCloud, pedPC=pedCloud, cycPC=cycCloud, bb3D=bb3D,
-                                         fileName="")
+                                         fileName=outputFileName)
 
-    if True:
+    if False:
         fig, axes = plt.subplots(6, 1, sharey=True)
         for r in range(0, 6):
             axes[r].imshow(bevImage[:, :, r])

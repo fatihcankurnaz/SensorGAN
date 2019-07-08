@@ -48,9 +48,9 @@ def majority_vote(lst):
         elif most_common_val == 2: #vehicleSegmentLabel
             final_val = 2
         elif most_common_val == 3: #pedestrianSegmentLabel
-            final_val = 0#3
+            final_val = 3
         elif most_common_val == 4: #cycleSegmentLabel
-            final_val = 0#4
+            final_val = 4
 
     return final_val
 
@@ -75,9 +75,9 @@ def majority_vote_with_constraints(lst):
         if rateVehicle >= threshold:
             final_val= 2
         if ratePedestrian >= threshold:
-            final_val= 0 #3
+            final_val= 3
         if rateCyclist >= threshold:
-            final_val= 0 #4
+            final_val= 4
 
         #print ("list: " + str(lst) + " b: " + str(rateBackground) + " r: " + str(rateRoad) + " f: " + str(final_val))
 
