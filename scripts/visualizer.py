@@ -20,11 +20,11 @@ class Vis(object):
         self.bcgColor = bcgColor
         self.pointSize = pointSize
         self.colorOrgPC = [0.8, 0.8, 0.8]  # original raw point cloud color
-        self.colorFovPC = [0.6, 0.6, 0.6]  # field of view point cloud color
-        self.colorRoadPC = [0, 1, 0]  # road point cloud color
-        self.colorVehPC = [1, 0, 0]  # vehicle point cloud color
-        self.colorPedPC = [0, 0, 1]  # pedestrian point cloud color
-        self.colorCycPC = [0, 1, 1]  # cyclist point cloud color
+        self.colorFovPC = [69/255.0, 69/255.0, 69/255.0]  # field of view point cloud color
+        self.colorRoadPC = [128/255.0, 64/255.0, 128/255.0]  # road point cloud color
+        self.colorVehPC = [0, 0, 142/255.0]  # vehicle point cloud color
+        self.colorPedPC = [219/255.0, 19/255.0, 60/255.0]  # pedestrian point cloud color
+        self.colorCycPC = [119/255.0, 10/255.0, 32/255.0]  # cyclist point cloud color
 
     def showGrayImage(self, img=[]):
 
@@ -135,8 +135,9 @@ class Vis(object):
             mlab.points3d(x, y, z, np.ones(len(cycPC)), color=tuple(self.colorCycPC),
                           colormap="spectral", scale_factor=self.pointSize)
 
-        self.draw_3D_bboxes(bb3D, figure, draw_text=False)
-        print("FIIIIIIIIIII",fileName)
+        if bb3D:
+            self.draw_3D_bboxes(bb3D, figure, draw_text=False)
+
         # set camera parameters
         figure.scene.camera.zoom(zoomFactor)
         figure.scene.camera.azimuth(azimuthAngle)

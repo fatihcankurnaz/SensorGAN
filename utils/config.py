@@ -36,6 +36,8 @@ config.TRAIN.START_EPOCH = 0
 config.TRAIN.MAX_EPOCH = 1000
 config.TRAIN.LOAD_WEIGHTS = ""
 config.TRAIN.SAVE_WEIGHTS = ""
+config.TRAIN.DISCRIMINATOR_CRITERION_REDUCTION = "mean"
+config.TRAIN.CYCLE_LOSS_REDUCTION = "mean"
 
 
 def update_config_secondaries(left, right):

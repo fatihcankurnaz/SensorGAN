@@ -62,7 +62,8 @@ def parseBB3D(curr_path, bb3D_path):
     '''
     pathName, tempName = os.path.split(curr_path)
     currFileName, _ = tempName.split(".")
-    bbFileName = bb3D_path #+ currFileName.replace('full_label', 'bb3d') + ".bin"
+    bbFileName = bb3D_path + currFileName.replace('full_label', 'bb3d') + ".bin"
+    print(bbFileName)
     boundingbox_3d = []
     if os.path.exists(bbFileName):
         boundingbox_3d = loadBoundingBox(bbFileName)
@@ -111,18 +112,18 @@ def processData(cloudName, bb3D_path, PC2ImgConv, outputFileName):
     timeElapsed = time.time() - timeStart
     print(" bevImage generation took  " + str(timeElapsed))
 
-    if True:
+    if False:
         visualizer = Vis()
         # get bounding boxes
-        bb3D = parseBB3D(cloudName,bb3D_path)#bb3D_path
+        bb3D = [1] #parseBB3D(cloudName,bb3D_path)#bb3D_path
 
         if bb3D is not None:
             # decompose cloud into object clouds
             backgrdCloud, roadCloud, vehCloud, pedCloud, cycCloud = decomposeCloud(colorizedPC, verbose=True)
 
             visualizer.showCloudsWithBBs(orgPC=backgrdCloud, fovPC=bevCloud,  roadPC=roadCloud,
-                                         vehPC=vehCloud, pedPC=pedCloud, cycPC=cycCloud, bb3D=bb3D,
-                                         fileName=outputFileName)
+                                         vehPC=vehCloud, pedPC=pedCloud, cycPC=cycCloud, bb3D=[],
+                                         fileName=outputFileName.split(".npy")[0]+".png")
 
     if False:
         fig, axes = plt.subplots(6, 1, sharey=True)
@@ -133,6 +134,12 @@ def processData(cloudName, bb3D_path, PC2ImgConv, outputFileName):
 
         plt.show()
 
+    if True:
+        # print(type(bevImage[:,:,5]))
+        np.savez_compressed(outputFileName, data=bevImage[:, :, 5])
+        # plt.axis("off")
+        # plt.imshow(bevImage[:,:,5])
+        # plt.show()
 def main():
 
     velo_path = "/SPACE/kan/Data/KITTI_object_labeled/Velo_labeled/"
@@ -158,12 +165,12 @@ def main():
 
     """ ---------- point cloud to image converter instance -------"""
     # version 02
-    PC2ImgConv = PC2ImageConverter.PC2ImgConverter(imgChannel=5, xRange=[0, 50], yRange=[-6, 12], zRange=[-10, 8],
-                                                   xGridSize=0.2, yGridSize=0.3, zGridSize=0.3, maxImgHeight=64,
+    PC2ImgConv = PC2ImageConverter.PC2ImgConverter(imgChannel=5, xRange=[0, 25], yRange=[-6, 12], zRange=[-10, 8],
+                                                   xGridSize=0.1, yGridSize=0.15, zGridSize=0.3, maxImgHeight=128,
                                                    maxImgWidth=256, maxImgDepth=64)
 
 
-    frame_no=10
+    frame_no=200
     currCloudFullPathName = cloud_list[frame_no]
     print(currCloudFullPathName)
     _, fullCloudName = os.path.split(currCloudFullPathName)
