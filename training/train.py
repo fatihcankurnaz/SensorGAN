@@ -41,10 +41,10 @@ def save_model(config, sensor1_gen, sensor2_gen, sensor1_dis, sensor2_dis,
 
 
 def train(dataloader, config, device):
-    sensor1_gen_losses = []
-    sensor2_gen_losses = []
-    sensor1_disc_losses = []
-    sensor2_disc_losses = []
+    lidar_gen_losses = []
+    camera_gen_losses = []
+    lidar_disc_losses = []
+    camera_disc_losses = []
     cycle_loss = []
 
     # nn.BCEWithLogitsLoss(reduction='mean') # works better with log loss
@@ -55,64 +55,113 @@ def train(dataloader, config, device):
     fake_sample_label = 0
 
     # each sensor should have their own Generator and Discriminator because their input size will probably not match
-    sensor1_gen = Generator(1,5).to(device)
-    sensor2_gen = Generator(1,5).to(device)
-    sensor1_dis = Discriminator(1).to(device)
-    sensor2_dis = Discriminator(1).to(device)
+    lidar_gen = Generator(1,5).to(device)
+    camera_gen = Generator(1,5).to(device)
+    lidar_disc = Discriminator(1).to(device)
+    camera_disc = Discriminator(1).to(device)
 
     # Setup Adam optimizers for both G and D
-    optimizer_sensor1_gen = optim.Adam(sensor1_gen.parameters(), lr=config.SENSOR1_GENERATOR.BASE_LR)
-    optimizer_sensor2_gen = optim.Adam(sensor2_gen.parameters(), lr=config.SENSOR2_GENERATOR.BASE_LR)
-    optimizer_sensor1_dis = optim.Adam(sensor1_dis.parameters(), lr=config.SENSOR1_DISCRIMINATOR.BASE_LR)
-    optimizer_sensor2_dis = optim.Adam(sensor2_dis.parameters(), lr=config.SENSOR2_DISCRIMINATOR.BASE_LR)
+    optimizer_lidar_gen = optim.Adam(lidar_gen.parameters(), lr=config.LIDAR_GENERATOR.BASE_LR)
+    optimizer_camera_gen = optim.Adam(camera_gen.parameters(), lr=config.CAMERA_GENERATOR.BASE_LR)
+    optimizer_lidar_disc = optim.Adam(lidar_disc.parameters(), lr=config.LIDAR_DISCRIMINATOR.BASE_LR)
+    optimizer_camera_disc = optim.Adam(camera_disc.parameters(), lr=config.CAMERA_DISCRIMINATOR.BASE_LR)
 
     if config.TRAIN.START_EPOCH > 0:
         print("loading previous model")
         checkpoint = torch.load(config.TRAIN.LOAD_WEIGHTS)
-        sensor1_gen.load_state_dict(checkpoint['sensor1_gen'])
-        sensor2_gen.load_state_dict(checkpoint['sensor2_gen'])
-        sensor1_dis.load_state_dict(checkpoint['sensor1_dis'])
-        sensor2_dis.load_state_dict(checkpoint['sensor2_dis'])
-        optimizer_sensor1_gen.load_state_dict(checkpoint['optimizer_sensor1_gen'])
-        optimizer_sensor2_gen.load_state_dict(checkpoint['optimizer_sensor2_gen'])
-        optimizer_sensor1_dis.load_state_dict(checkpoint['optimizer_sensor1_dis'])
-        optimizer_sensor2_dis.load_state_dict(checkpoint['optimizer_sensor2_dis'])
+        lidar_gen.load_state_dict(checkpoint['lidar_gen'])
+        camera_gen.load_state_dict(checkpoint['camera_gen'])
+        lidar_disc.load_state_dict(checkpoint['lidar_disc'])
+        camera_disc.load_state_dict(checkpoint['camera_disc'])
+        optimizer_lidar_gen.load_state_dict(checkpoint['optimizer_lidar_gen'])
+        optimizer_camera_gen.load_state_dict(checkpoint['optimizer_camera_gen'])
+        optimizer_lidar_disc.load_state_dict(checkpoint['optimizer_lidar_disc'])
+        optimizer_camera_disc.load_state_dict(checkpoint['optimizer_camera_disc'])
 
-        sensor1_gen.train()
-        sensor2_gen.train()
-        sensor1_dis.train()
-        sensor2_dis.train()
+        lidar_gen.train()
+        camera_gen.train()
+        lidar_disc.train()
+        camera_disc.train()
         print("done")
 
     for epoch in range(config.TRAIN.START_EPOCH, config.TRAIN.END_EPOCH):
 
+        label_fake = torch.full((config.TRAIN.BATCH_SIZE,), real_sample_label, device=device)
+        label_real = torch.full((config.TRAIN.BATCH_SIZE,), fake_sample_label, device=device)
+
+        label_real = label_real.cuda()
+        label_fake = label_fake.cuda()
+
         ################################################################################
         #                               Zero Gradients
         ################################################################################
-        sensor1_gen.zero_grad()
-        sensor2_gen.zero_grad()
-        sensor1_dis.zero_grad()
-        sensor2_dis.zero_grad()
+        lidar_gen.zero_grad()
+        camera_gen.zero_grad()
+        lidar_disc.zero_grad()
+        camera_disc.zero_grad()
 
-        optimizer_sensor1_gen.zero_grad()
-        optimizer_sensor2_gen.zero_grad()
-        optimizer_sensor1_dis.zero_grad()
-        optimizer_sensor2_dis.zero_grad()
+        optimizer_lidar_gen.zero_grad()
+        optimizer_camera_gen.zero_grad()
+        optimizer_lidar_disc.zero_grad()
+        optimizer_camera_disc.zero_grad()
         ################################################################################
-        #                           First Sensor Discriminator
+        #                           Camera Discriminator
         ################################################################################
 
+        camera_sample = ...
 
-        sensor2_sample = ...
+        output = camera_disc(camera_sample)
 
-        # Forward pass real batch through D
-        output = sensor_1(sensor2_sample)
+        output = output.view(-1)
 
-        o
+        label_real.fill_(real_sample_label)
+
+        # Calculate loss on all-real batch
+        real_sample_error = criterion(output, label_real)
+
+        # Calculate gradients for D in backward pass
+        real_sample_error.backward()
+
+        real_sample_error_value_disc = output.mean().item()
+
+        generated_camera_sample = camera_gen(lidar_sample)
+        label_fake.fill_(fake_sample_label)
+
+        # Classify all fake batch with D
+        disc_on_fake_sample = camera_disc(generated_camera_sample.detach())
+        disc_on_fake_sample = disc_on_fake_sample.view(-1)
+
+        # Calculate D's loss on the all-fake batch
+        fake_sample_error = criterion(disc_on_fake_sample, label_fake)
+
+        # Calculate the gradients for this batch
+        fake_sample_error.backward()
+
+        fake_sample_error_value_disc = output.mean().item()
+
+        optimizer_camera_disc.step()
 
         ################################################################################
-        #                           First Sensor Generator
+        #                           Camera Generator
         ################################################################################
+
+        generated_camera_sample = camera_gen(lidar_sample)
+
+        label_real.fill_(real_sample_label)  # fake labels are real for generator cost
+
+        # Since we just updated D, perform another forward pass of all-fake batch through D
+        disc_on_fake_sample = camera_disc(generated_camera_sample.detach())
+
+        disc_on_fake_sample = disc_on_fake_sample.view(-1)
+
+        # Calculate G's loss based on this output
+        fake_sample_error = criterion(disc_on_fake_sample, label_real)
+        # Calculate gradients for G
+        fake_sample_error.backward()
+
+        fake_sample_error_gen = output.mean().item()
+
+        optimizer_camera_gen.step()
 
         ################################################################################
         #                           Second Sensor Discriminator
@@ -122,8 +171,11 @@ def train(dataloader, config, device):
         #                           Second Sensor Generator
         ################################################################################
 
-    save_model(config, sensor1_gen, sensor2_gen , sensor1_dis , sensor2_dis, optimizer_sensor1_gen,
-               optimizer_sensor2_gen, optimizer_sensor1_dis, optimizer_sensor2_dis )
+    
+
+
+    save_model(config, lidar_gen, camera_gen , lidar_disc , camera_disc, optimizer_lidar_gen,
+               optimizer_camera_gen, optimizer_lidar_disc, optimizer_camera_disc )
 
 
 def main(opts):
