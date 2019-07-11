@@ -204,9 +204,9 @@ class PspInference:
         self.pred = decode_labels(self.raw_output_up, img_shape, param['num_classes'])
 
         # Init tf Session
-        #self.config = tf.ConfigProto()
-        #self.config.gpu_options.allow_growth = True
-        #self.sess = tf.Session(config=self.config)
+        #self.core = tf.ConfigProto()
+        #self.core.gpu_options.allow_growth = True
+        #self.sess = tf.Session(core=self.core)
         #self.init = tf.global_variables_initializer()
 
         #self.sess.run(self.init)

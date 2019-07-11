@@ -15,8 +15,8 @@ config.OUTPUT_DIR= ""
 config.DATALOADER = EasyDict()
 config.DATALOADER.WORKERS = 2
 config.DATALOADER.SHUFFLE = True
-config.DATALOADER.SENSOR1_PATH = ""
-config.DATALOADER.SENSOR2_PATH = ""
+config.DATALOADER.LIDAR_DATA_PATH = "/home/fatih/LidarLabelsCameraViewTest"
+config.DATALOADER.CAMERA_DATA_PATH = "/home/fatih/SegmentedInputTest"
 
 config.LIDAR_GENERATOR = EasyDict()
 config.LIDAR_GENERATOR.BASE_LR = 0.0006
@@ -59,6 +59,6 @@ def load_config(config_file):
                     else:
                         config[i] = k
                 else:
-                    raise ValueError(i, " is not one of the config variables")
+                    raise ValueError(i, " is not one of the core variables")
 
 
