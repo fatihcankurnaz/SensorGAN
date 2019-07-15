@@ -5,12 +5,15 @@ from __future__ import unicode_literals
 
 import optparse
 
-from utils.core.config import config
 from utils.data.Dataloader import lidar_camera_dataloader
+from utils.core.config import config
+
 from utils.core.config import load_config
 from utils.helpers.helpers import save_model
-from .Generator import Generator
-from .Discriminator import Discriminator
+from utils.helpers.helpers import display_two_images
+from Generator import Generator
+from Discriminator import Discriminator
+
 
 import torch.optim as optim
 import torch.nn as nn
@@ -20,8 +23,8 @@ import torch
 
 parser = optparse.OptionParser()
 
-parser.add_option('-c', '--core', dest="core",
-                  help="load this core file", metavar="FILE")
+parser.add_option('-c', '--config', dest="config",
+                  help="load this config file", metavar="FILE")
 
 
 
@@ -45,10 +48,15 @@ def train(dataloader, config, device):
     fake_sample_label = 0
 
     # each sensor should have their own Generator and Discriminator because their input size will probably not match
-    lidar_gen = Generator(1,5).to(device)
-    camera_gen = Generator(1,5).to(device)
-    lidar_disc = Discriminator(1).to(device)
-    camera_disc = Discriminator(1).to(device)
+    #lidar_gen = Generator(1,5).to(device)
+    camera_gen = Generator(1, 5, config.NUM_GPUS).to(device)
+    #lidar_disc = Discriminator(1).to(device)
+    camera_disc = Discriminator(1, config.NUM_GPUS).to(device)
+
+    if (device.type == 'cuda') and (config.NUM_GPUS > 1):
+        camera_gen = nn.DataParallel(camera_gen, list(range(config.NUM_GPUS)))
+    if (device.type == 'cuda') and (config.NUM_GPUS > 1):
+        camera_disc = nn.DataParallel(camera_disc, list(range(config.NUM_GPUS)))
 
     # Setup Adam optimizers for both G and D
     optimizer_lidar_gen = optim.Adam(lidar_gen.parameters(), lr=config.LIDAR_GENERATOR.BASE_LR)
@@ -56,6 +64,10 @@ def train(dataloader, config, device):
     optimizer_lidar_disc = optim.Adam(lidar_disc.parameters(), lr=config.LIDAR_DISCRIMINATOR.BASE_LR)
     optimizer_camera_disc = optim.Adam(camera_disc.parameters(), lr=config.CAMERA_DISCRIMINATOR.BASE_LR)
 
+    camera_gen_total_params = sum(p.numel() for p in camera_gen.parameters())
+    print("Camera Generator ", camera_gen_total_params)
+    camera_disch_total_params = sum(p.numel() for p in camera_disc.parameters())
+    print("Camera Discriminator ", camera_disch_total_params)
 
     if config.TRAIN.START_EPOCH > 0:
         print("loading previous model")
@@ -75,7 +87,7 @@ def train(dataloader, config, device):
         camera_disc.train()
         print("done")
 
-    for epoch in range(config.TRAIN.START_EPOCH, config.TRAIN.END_EPOCH):
+    for epoch in range(config.TRAIN.START_EPOCH, config.TRAIN.MAX_EPOCH):
         for current_batch, data in enumerate(dataloader, 0):
 
             label_fake = torch.full((config.TRAIN.BATCH_SIZE,), real_sample_label, device=device)
@@ -84,8 +96,12 @@ def train(dataloader, config, device):
             label_real = label_real.cuda()
             label_fake = label_fake.cuda()
 
-            camera_sample = data["camera_data"].device()
-            lidar_sample = data["lidar_data"].device()
+
+            #display_two_images(data["camera_data"][0], data["lidar_data"][0])
+
+
+            camera_sample = data["camera_data"].to(device = device, dtype=torch.float)
+            lidar_sample = data["lidar_data"].to(device = device, dtype=torch.float)
 
             ################################################################################
             #                               Zero Gradients
@@ -104,7 +120,6 @@ def train(dataloader, config, device):
             ################################################################################
 
             output = camera_disc(camera_sample)
-
             output = output.view(-1)
 
             label_real.fill_(real_sample_label)
@@ -118,6 +133,7 @@ def train(dataloader, config, device):
             camera_disc_real_sample_output = output.mean().item()
 
             generated_camera_sample = camera_gen(lidar_sample)
+
             label_fake.fill_(fake_sample_label)
 
             # Classify all fake batch with D
@@ -168,7 +184,7 @@ def train(dataloader, config, device):
                 print(
                     '[%d/%d][%d/%d]\t\t Lidar to Cam GAN Loss_DF/R: %.4f/ %.4f \t'
                     'Loss_G: %.4f\tD(x): %.4f\tD(G(z)): %.4f / %.4f \n'
-                    % (epoch, config.TRAIN.END_EPOCH, current_batch, len(dataloader),
+                    % (epoch, config.TRAIN.MAX_EPOCH, current_batch, len(dataloader),
                        fake_sample_error.item(), real_sample_error.item(), fake_sample_error.item(),
                        camera_disc_fake_sample_output, camera_disc_real_sample_output, camera_gen_output))
 
@@ -181,7 +197,7 @@ def train(dataloader, config, device):
 def main(opts):
     load_config(opts.config)
     dataloader = lidar_camera_dataloader(config)
-    device = torch.device("cuda:0" if (torch.cuda.is_available() and ngpu > 0) else "cpu")
+    device = torch.device("cuda:0" if (torch.cuda.is_available() and config.NUM_GPUS > 0) else "cpu")
     train(dataloader,config, device)
 
 

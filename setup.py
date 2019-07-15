@@ -6,4 +6,8 @@ import glob
 from setuptools import setup
 
 
-setup(name="sensorgan", package_data={utils})
+
+setup(
+    name='Sensorgan',
+    packages=['utils', 'utils.core', 'utils.data', 'utils.helpers']
+)

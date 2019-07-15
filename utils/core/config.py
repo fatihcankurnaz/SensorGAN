@@ -40,16 +40,27 @@ config.TRAIN.DISCRIMINATOR_CRITERION_REDUCTION = "mean"
 config.TRAIN.CYCLE_LOSS_REDUCTION = "mean"
 
 
+def fix_the_type(desired_type, given_type):
+    if type(desired_type) == type(given_type):
+        return given_type
+    elif isinstance(desired_type, bool):
+        return bool(given_type)
+    elif isinstance(desired_type, int):
+        return int(given_type)
+    elif isinstance(desired_type, float):
+        return float(given_type)
+
+
 def update_config_secondaries(left, right):
     for i,k in right.items():
-        print(i)
-        config[left][i] = k
+        new_k = fix_the_type(config[left][i],k)
+        config[left][i] = new_k
 
 
 def load_config(config_file):
     if config_file is not None:
         with open(config_file,"r") as f:
-            my_config = EasyDict(yaml.load(f))
+            my_config = EasyDict(yaml.load(f,  Loader=yaml.BaseLoader) )
 
             for i, k in my_config.items():
 
@@ -57,7 +68,8 @@ def load_config(config_file):
                     if isinstance(k, EasyDict):
                         update_config_secondaries(i,k)
                     else:
-                        config[i] = k
+                        new_k = fix_the_type(config[i],k)
+                        config[i] = new_k
                 else:
                     raise ValueError(i, " is not one of the core variables")
 

@@ -1,4 +1,4 @@
-from torch.utils.data.dataloader import  Dataset
+from torch.utils.data import Dataset
 from os import listdir
 from os.path import join
 import numpy as np
@@ -21,8 +21,8 @@ class LidarAndCameraDataset(Dataset):
                 self.camera_dataset.append(join(current_dir, file))
 
     def __getitem__(self, idx):
-        lidar_data = np.load(self.lidar_dataset[idx])["data"]
-        camera_data = np.load(self.camera_dataset[idx])["data"]
+        lidar_data = np.load(self.lidar_dataset[idx])["data"].reshape(1,375,1242)
+        camera_data = np.load(self.camera_dataset[idx])["data"].reshape(1,375,1242)
         return {"lidar_data":lidar_data, "camera_data":camera_data}
 
     def __len__(self):
