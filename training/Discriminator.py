@@ -2,67 +2,86 @@ import torch
 import torch.nn as nn
 
 
+
 # class Discriminator(nn.Module):
-#     def __init__(self, inp_dim=1):
+#     def __init__(self, channel=1, ngpu=1):
 #         super(Discriminator, self).__init__()
+#         self.ngpu = ngpu
+#         self.main = nn.Sequential(
+#
+#             nn.Conv2d(1, 64, 4, 2, 1, bias=False),
+#             nn.LeakyReLU(0.2, inplace=True),
+#
+#             nn.Conv2d(64, 128, 4, 2, 1, bias=False),
+#             nn.BatchNorm2d(128),
+#             nn.LeakyReLU(0.2, inplace=True),
+#
+#             nn.Conv2d(128, 256, 4, 2, 1, bias=False),
+#             nn.BatchNorm2d(256),
+#             nn.LeakyReLU(0.2, inplace=True),
 #
 #
-#         self.model = nn.Sequential(
-#             nn.Linear(inp_dim, 512),
-#             nn.LeakyReLU(0.2, inplace=True),
-#             nn.Linear(512, 128),
-#             nn.Dropout(0.4),
-#             nn.LeakyReLU(0.2, inplace=True),
-#             nn.Linear(128, 1),
+#             nn.Conv2d(256, 1, 4, 1, 0, bias=False),
+#
+#         )
+#         self.end = nn.Sequential(
+#
+#             nn.Linear(6536, 1, bias=True),
+#             nn.Sigmoid()
 #         )
 #
-#     def forward(self, img):
-#         print(img.shape)
-#         # Concatenate label embedding and image to produce input
-#         validity = self.model(img)
-#         return validity
 #
+#     def forward(self, input):
+#         output = self.main(input)
+#
+#         output = output.view(output.size()[0],-1)
+#         #print(output.shape)
+#
+#         output = self.end(output)
+#
+#         #print(output.shape)
+#
+#         return output.view(-1, 1).squeeze(1)
+
 
 class Discriminator(nn.Module):
-    def __init__(self, channel=1, ngpu=1):
+    def __init__(self, in_channels=5, ngpu=2):
         super(Discriminator, self).__init__()
         self.ngpu = ngpu
-        self.main = nn.Sequential(
+        def discriminator_block(in_filters, out_filters, normalization=True):
+            """Returns downsampling layers of each discriminator block"""
+            layers = [nn.Conv2d(in_filters, out_filters, 4, stride=2, padding=1)]
+            if normalization:
+                layers.append(nn.InstanceNorm2d(out_filters))
+            layers.append(nn.LeakyReLU(0.2, inplace=True))
+            return layers
 
-            nn.Conv2d(1, 64, 4, 2, 1, bias=False),
-            nn.LeakyReLU(0.2, inplace=True),
-
-            nn.Conv2d(64, 128, 4, 2, 1, bias=False),
-            nn.BatchNorm2d(128),
-            nn.LeakyReLU(0.2, inplace=True),
-
-            nn.Conv2d(128, 256, 4, 2, 1, bias=False),
-            nn.BatchNorm2d(256),
-            nn.LeakyReLU(0.2, inplace=True),
-
-            nn.Conv2d(256, 512, 4, 2, 1, bias=False),
-            nn.BatchNorm2d(512),
-            nn.LeakyReLU(0.2, inplace=True),
-
-            nn.Conv2d(512, 1, 4, 1, 0, bias=False),
+        self.model = nn.Sequential(
+            *discriminator_block(in_channels , 16, normalization=False),
+            *discriminator_block(16, 32),
+            *discriminator_block(32, 64),
+            *discriminator_block(64, 128),
+            nn.ZeroPad2d((1, 0, 1, 0)),
+            nn.Conv2d(128, 1, 2, padding=1, bias=False),
 
         )
-        self.end = nn.Sequential(
-
-            nn.Linear(1480, 1, bias=True),
+        self.final = nn.Sequential(
+            nn.Linear(1975, 1),
             nn.Sigmoid()
         )
 
+    def forward(self, inp):
+        # Concatenate image and condition image by channels to produce input
 
-    def forward(self, input):
 
-        output = self.main(input)
-        #print(output.shape)
+        output = self.model(inp)
+
         output = output.view(output.size()[0],-1)
         #print(output.shape)
 
-        output = self.end(output)
+        output = self.final(output)
 
         #print(output.shape)
 
         return output.view(-1, 1).squeeze(1)
+

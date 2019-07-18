@@ -38,6 +38,8 @@ config.TRAIN.LOAD_WEIGHTS = ""
 config.TRAIN.SAVE_WEIGHTS = ""
 config.TRAIN.DISCRIMINATOR_CRITERION_REDUCTION = "mean"
 config.TRAIN.CYCLE_LOSS_REDUCTION = "mean"
+config.TRAIN.EXAMPLE_SAVE_PATH = ""
+config.TRAIN.GRAPH_SAVE_PATH = ""
 
 
 def fix_the_type(desired_type, given_type):
