@@ -14,6 +14,16 @@ def save_model(config, sensor1_gen, sensor2_gen, sensor1_dis, sensor2_dis,
         'optimizer_sensor2_dis': optimizer_sensor2_dis.state_dict()
     }, config.TRAIN.SAVE_WEIGHTS)
 
+
+def save_vanilla_model(config, sensor1_gen, sensor1_dis, optimizer_sensor1_gen, optimizer_sensor1_dis, epoch):
+
+    torch.save({
+        'sensor1_gen': sensor1_gen.state_dict(),
+        'sensor1_dis': sensor1_dis.state_dict(),
+        'optimizer_sensor1_gen': optimizer_sensor1_gen.state_dict(),
+        'optimizer_sensor1_dis': optimizer_sensor1_dis.state_dict(),
+    }, config.TRAIN.SAVE_WEIGHTS+str(epoch))
+
 def display_two_images(image1, image2):
     plt.subplot(2, 1, 1)
     plt.imshow(image1)

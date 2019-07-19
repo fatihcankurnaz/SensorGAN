@@ -9,7 +9,7 @@ from utils.data.Dataloader import lidar_camera_dataloader
 from utils.core.config import config
 
 from utils.core.config import load_config
-from utils.helpers.helpers import save_model
+from utils.helpers.helpers import save_vanilla_model
 from utils.helpers.helpers import display_two_images
 
 
@@ -29,6 +29,7 @@ parser = optparse.OptionParser()
 
 parser.add_option('-c', '--config', dest="config",
                   help="load this config file", metavar="FILE")
+
 
 
 
@@ -77,7 +78,7 @@ def train(dataloader, config, device):
 
     if config.TRAIN.START_EPOCH > 0:
         print("loading previous model")
-
+        checkpoint = torch.load(config.TRAIN.LOAD_WEIGHTS)
         camera_gen.load_state_dict(checkpoint['camera_gen'])
         camera_disc.load_state_dict(checkpoint['camera_disc'])
         optimizer_camera_gen.load_state_dict(checkpoint['optimizer_camera_gen'])
@@ -197,7 +198,12 @@ def train(dataloader, config, device):
         with torch.no_grad():
             fakeCamera = camera_gen(lidar_sample.detach())
             example_camera_output.append(fakeCamera)
-            np.savez_compressed(config.TRAIN.EXAMPLE_SAVE_PATH, data=example_camera_output[-1].cpu().numpy())
+            np.savez_compressed(config.TRAIN.EXAMPLE_SAVE_PATH + str(epoch) + "_generated_",
+                                data=fakeCamera[-1].cpu().numpy())
+            np.savez_compressed(config.TRAIN.EXAMPLE_SAVE_PATH + str(epoch) + "_given_lidar_",
+                                data=lidar_sample[-1].cpu().numpy())
+            np.savez_compressed(config.TRAIN.EXAMPLE_SAVE_PATH + str(epoch) + "_expected_camera_",
+                                data=camera_sample[-1].cpu().numpy())
 
         plt.figure(figsize=(20, 14))
         plt.title("GAN Losses  During Training")
@@ -216,6 +222,9 @@ def train(dataloader, config, device):
 
     #save_model(config, lidar_gen, camera_gen , lidar_disc , camera_disc, optimizer_lidar_gen,
     #           optimizer_camera_gen, optimizer_lidar_disc, optimizer_camera_disc )
+        if epoch != 0 and epoch%5 == 0 :
+            print("Saving Model at ", epoch)
+            save_vanilla_model(config, camera_gen, camera_disc, optimizer_camera_gen, optimizer_camera_disc, epoch)
 
 
 

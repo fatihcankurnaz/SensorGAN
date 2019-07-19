@@ -10,9 +10,9 @@ from os.path import join, isdir
 import os
 
 
-label_root_path = "/home/fatih/LidarLabelsCameraViewReal"
+label_root_path = "/home/fatih/LidarLabelsCameraViewLast"
 
-segmented_root_path = "/home/fatih/SegmentedInputReal"
+segmented_root_path = "/home/fatih/SegmentedInputLast"
 
 
 def random_paths(image_number):
@@ -78,18 +78,20 @@ def main():
             print("##############################")
             continue
 
-        try:
-            current_lidar = make_one_hot(current_lidar)
-            current_camera = make_one_hot(current_camera)
-        except:
-            print("##############################")
-            print("fix function problem: ", i, " -- ", lidar)
-            print("##############################")
-            continue
+        # try:
+        #     current_lidar = make_one_hot(current_lidar)
+        #     current_camera = make_one_hot(current_camera)
+        # except:
+        #     print("##############################")
+        #     print("fix function problem: ", i, " -- ", lidar)
+        #     print("##############################")
+        #     continue
 
         try:
-            np.savez_compressed(lidar, data=current_lidar)
-            np.savez_compressed(camera, data=current_camera)
+            print(lidar)
+            print(lidar.split(".")[0])
+            np.save(lidar.split(".")[0]+".npy",current_lidar)
+            np.save(camera.split(".")[0]+".npy",current_camera)
         except:
             print("##############################")
             print("save problem: ", i, " -- ", )

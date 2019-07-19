@@ -9,6 +9,6 @@ def lidar_camera_dataloader(config):
     camera_path = config.DATALOADER.CAMERA_DATA_PATH
 
     dataloader = DataLoader(LidarAndCameraDataset(lidar_path, camera_path), batch_size=config.TRAIN.BATCH_SIZE,
-                            shuffle=config.DATALOADER.SHUFFLE, num_workers=config.DATALOADER.WORKERS)
+                            shuffle=False, num_workers=config.DATALOADER.WORKERS)
 
     return dataloader

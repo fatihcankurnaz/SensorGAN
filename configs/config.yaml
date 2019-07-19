@@ -1,6 +1,6 @@
 NUM_GPUS: 2
 DATALOADER:
-  WORKERS: 2
+  WORKERS: 8
   SHUFFLE: True
   LIDAR_DATA_PATH: "/home/fatih/Inputs/LidarData"
   CAMERA_DATA_PATH: "/home/fatih/Inputs/CameraData"
@@ -13,11 +13,11 @@ CAMERA_GENERATOR:
 CAMERA_DISCRIMINATOR:
   BASE_LR: 0.00001
 TRAIN:
-  BATCH_SIZE: 8
+  BATCH_SIZE: 16
   START_EPOCH: 0
   MAX_EPOCH: 1000
   LOAD_WEIGHTS: ""
-  SAVE_WEIGHTS: ""
+  SAVE_WEIGHTS: "/home/fatih/my_git/sensorgan/outputs/saved_models/"
   DISCRIMINATOR_CRITERION_REDUCTION: "mean"
   CYCLE_LOSS_REDUCTION: "mean"
   EXAMPLE_SAVE_PATH: "/home/fatih/my_git/sensorgan/outputs/examples/"
