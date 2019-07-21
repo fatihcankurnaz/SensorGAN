@@ -21,14 +21,15 @@ class LidarAndCameraDataset(Dataset):
                 self.camera_dataset.append(join(current_dir, file))
 
     def __getitem__(self, idx):
+        ##print(idx, self.lidar_dataset[idx])
         try:
             lidar_data = np.load(self.lidar_dataset[idx])["data"].reshape(5,375,1242)
             camera_data = np.load(self.camera_dataset[idx])["data"].reshape(5,375,1242)
-            return {"lidar_data":lidar_data, "camera_data":camera_data}
         except:
-            print("PROBLEM AT", self.lidar_dataset[idx])
-            print("PROBLEM AT", self.camera_dataset[idx])
-            return {}
+            print("lel",idx,self.lidar_dataset[idx])
+
+
+        return {"lidar_data": lidar_data, "camera_data": camera_data}
 
     def __len__(self):
         return len(self.lidar_dataset)

@@ -58,6 +58,7 @@ def train(dataloader, config, device):
     camera_disc = Discriminator(5, config.NUM_GPUS).to(device)
 
     if (device.type == 'cuda') and (config.NUM_GPUS > 1):
+
         camera_gen = nn.DataParallel(camera_gen, list(range(config.NUM_GPUS)))
     if (device.type == 'cuda') and (config.NUM_GPUS > 1):
         camera_disc = nn.DataParallel(camera_disc, list(range(config.NUM_GPUS)))
@@ -193,17 +194,22 @@ def train(dataloader, config, device):
 
             camera_gen_loss.append(fake_sample_error_gen.item())
             camera_disc_loss.append(fake_sample_error_disc.item() + real_sample_error.item())
+            if current_batch == 0:
+                with torch.no_grad():
+                    fakeCamera = camera_gen(lidar_sample.detach())
+                    example_camera_output.append(fakeCamera)
+                    np.savez_compressed(config.TRAIN.EXAMPLE_SAVE_PATH + str(epoch) + "_generated_",
+                                        data=fakeCamera[-1].cpu().numpy())
+                    np.savez_compressed(config.TRAIN.EXAMPLE_SAVE_PATH + str(epoch) + "_given_lidar_",
+                                        data=lidar_sample[-1].cpu().numpy())
+                    np.savez_compressed(config.TRAIN.EXAMPLE_SAVE_PATH + str(epoch) + "_expected_camera_",
+                                        data=camera_sample[-1].cpu().numpy())
+            del camera_sample, lidar_sample
+            del label_real, label_fake
+            del generated_camera_sample
 
 
-        with torch.no_grad():
-            fakeCamera = camera_gen(lidar_sample.detach())
-            example_camera_output.append(fakeCamera)
-            np.savez_compressed(config.TRAIN.EXAMPLE_SAVE_PATH + str(epoch) + "_generated_",
-                                data=fakeCamera[-1].cpu().numpy())
-            np.savez_compressed(config.TRAIN.EXAMPLE_SAVE_PATH + str(epoch) + "_given_lidar_",
-                                data=lidar_sample[-1].cpu().numpy())
-            np.savez_compressed(config.TRAIN.EXAMPLE_SAVE_PATH + str(epoch) + "_expected_camera_",
-                                data=camera_sample[-1].cpu().numpy())
+
 
         plt.figure(figsize=(20, 14))
         plt.title("GAN Losses  During Training")
@@ -215,14 +221,12 @@ def train(dataloader, config, device):
         plt.legend()
         plt.savefig(config.TRAIN.GRAPH_SAVE_PATH+str(epoch))
         plt.close()
-            # del camera_sample, lidar_sample
-            # del label_real, label_fake
-            # del output, generated_camera_sample
+
 
 
     #save_model(config, lidar_gen, camera_gen , lidar_disc , camera_disc, optimizer_lidar_gen,
     #           optimizer_camera_gen, optimizer_lidar_disc, optimizer_camera_disc )
-        if epoch != 0 and epoch%5 == 0 :
+        if epoch != 0 and epoch% config.TRAIN.SAVE_AT == 0 :
             print("Saving Model at ", epoch)
             save_vanilla_model(config, camera_gen, camera_disc, optimizer_camera_gen, optimizer_camera_disc, epoch)
 
@@ -233,6 +237,7 @@ def main(opts):
     load_config(opts.config)
     dataloader = lidar_camera_dataloader(config)
     device = torch.device("cuda:0" if (torch.cuda.is_available() and config.NUM_GPUS > 0) else "cpu")
+    print(device)
     train(dataloader,config, device)
 
 

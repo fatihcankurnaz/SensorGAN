@@ -9,7 +9,7 @@ import yaml
 from easydict import EasyDict
 
 config = EasyDict()
-config.NUM_GPUS = 2
+config.NUM_GPUS = 1
 config.OUTPUT_DIR= ""
 
 config.DATALOADER = EasyDict()
@@ -40,6 +40,7 @@ config.TRAIN.DISCRIMINATOR_CRITERION_REDUCTION = "mean"
 config.TRAIN.CYCLE_LOSS_REDUCTION = "mean"
 config.TRAIN.EXAMPLE_SAVE_PATH = ""
 config.TRAIN.GRAPH_SAVE_PATH = ""
+config.TRAIN.SAVE_AT = 2
 
 
 def fix_the_type(desired_type, given_type):

@@ -11,7 +11,7 @@ def turn_back_to_oneD(data):
     for dim in range(0, 5):
         for i in range(0, 374):
             for j in range(0, 1241):
-                if data[dim][i][j] > 0.1:
+                if data[dim][i][j] > 0.95:
                     real_version[i][j] = dim
     return real_version
 
