@@ -64,6 +64,15 @@ def train(dataloader, config, device):
     # log 2
     lidar_weights = torch.tensor([
         1.0139991,  6.4594316, 12.68067773024, 24.2414761695, 24.4699082327]).to(device=device, dtype=torch.float)
+    lidar_multiplier = torch.ones(config.TRAIN.BATCH_SIZE, 5, 375, 1242).to(device=device, dtype=torch.float)
+    for i in range(config.TRAIN.BATCH_SIZE):
+        lidar_multiplier[i][0] = torch.ones(375, 1242) * lidar_weights[0]
+        lidar_multiplier[i][1] = torch.ones(375, 1242) * lidar_weights[1]
+        lidar_multiplier[i][2] = torch.ones(375, 1242) * lidar_weights[2]
+        lidar_multiplier[i][3] = torch.ones(375, 1242) * lidar_weights[3]
+        lidar_multiplier[i][4] = torch.ones(375, 1242) * lidar_weights[4]
+
+
     # camera_weights = torch.tensor([
     #     1.4859513, 3.9798364, 13.7709121, 483.6851552, 926.3148902]).to(device=device, dtype=torch.float)
     # log2
@@ -94,15 +103,16 @@ def train(dataloader, config, device):
 
     # Setup Adam optimizers for both G and D
     optimizer_lidar_gen = optim.Adam(lidar_gen.parameters(), lr=config.LIDAR_GENERATOR.BASE_LR)
-    # lidar_gen_scheduler = optim.lr_scheduler.StepLR(optimizer_lidar_gen, step_size=config.LIDAR_GENERATOR.STEP_SIZE,
-    #                                                 gamma=config.LIDAR_GENERATOR.STEP_GAMMA)
+    lidar_gen_scheduler = optim.lr_scheduler.StepLR(optimizer_lidar_gen,
+                                                    step_size=config.LIDAR_GENERATOR.STEP_SIZE,
+                                                    gamma=config.LIDAR_GENERATOR.STEP_GAMMA)
     # optimizer_camera_gen = optim.Adam(camera_gen.parameters(), lr=config.CAMERA_GENERATOR.BASE_LR)
     # camera_gen_scheduler = optim.lr_scheduler.StepLR(optimizer_camera_gen, step_size=config.CAMERA_GENERATOR.STEP_SIZE,
     #                                                 gamma=config.CAMERA_GENERATOR.STEP_GAMMA)
     optimizer_lidar_disc = optim.Adam(lidar_disc.parameters(), lr=config.LIDAR_DISCRIMINATOR.BASE_LR)
-    # lidar_disc_scheduler = optim.lr_scheduler.StepLR(optimizer_lidar_disc,
-    #                                                  step_size=config.LIDAR_DISCRIMINATOR.STEP_SIZE,
-    #                                                  gamma=config.LIDAR_DISCRIMINATOR.STEP_GAMMA)
+    lidar_disc_scheduler = optim.lr_scheduler.StepLR(optimizer_lidar_disc,
+                                                     step_size=config.LIDAR_DISCRIMINATOR.STEP_SIZE,
+                                                     gamma=config.LIDAR_DISCRIMINATOR.STEP_GAMMA)
     # optimizer_camera_disc = optim.Adam(camera_disc.parameters(), lr=config.CAMERA_DISCRIMINATOR.BASE_LR)
     # camera_disc_scheduler = optim.lr_scheduler.StepLR(optimizer_camera_disc,
     #                                                   step_size=config.CAMERA_DISCRIMINATOR.STEP_SIZE,
@@ -120,16 +130,16 @@ def train(dataloader, config, device):
 
     example_camera_output = []
 
-    if config.TRAIN.START_EPOCH > 0:
-        print("loading previous model")
-        checkpoint = torch.load(config.TRAIN.LOAD_WEIGHTS)
-        camera_gen.load_state_dict(checkpoint['camera_gen'])
-        camera_disc.load_state_dict(checkpoint['camera_disc'])
-        optimizer_camera_gen.load_state_dict(checkpoint['optimizer_camera_gen'])
-        optimizer_camera_disc.load_state_dict(checkpoint['optimizer_camera_disc'])
-        camera_gen.train()
-        camera_disc.train()
-        print("done")
+    # if config.TRAIN.START_EPOCH > 0:
+    #     print("loading previous model")
+    #     checkpoint = torch.load(config.TRAIN.LOAD_WEIGHTS)
+    #     camera_gen.load_state_dict(checkpoint['camera_gen'])
+    #     camera_disc.load_state_dict(checkpoint['camera_disc'])
+    #     optimizer_camera_gen.load_state_dict(checkpoint['optimizer_camera_gen'])
+    #     optimizer_camera_disc.load_state_dict(checkpoint['optimizer_camera_disc'])
+    #     camera_gen.train()
+    #     camera_disc.train()
+    #     print("done")
 
     for epoch in range(config.TRAIN.START_EPOCH, config.TRAIN.MAX_EPOCH):
         for current_batch, data in enumerate(dataloader, 0):
@@ -229,8 +239,8 @@ def train(dataloader, config, device):
 
             # By using lidar samples as input we generate Camera data
             generated_lidar_sample = lidar_gen(camera_sample)
-
-            disc_on_fake_lidar_sample_gen = lidar_disc(generated_lidar_sample)
+            generated_lidar_with_weight = generated_lidar_sample * lidar_multiplier
+            disc_on_fake_lidar_sample_gen = lidar_disc(generated_lidar_with_weight)
             disc_on_fake_lidar_sample_gen = disc_on_fake_lidar_sample_gen.view(-1)
 
             # generated_segmented_view = torch.max(generated_camera_sample, dim=1)
@@ -256,8 +266,8 @@ def train(dataloader, config, device):
             ################################################################################
             # open after checking the generator
             lidar_disc.zero_grad()
-
-            lidar_disc_real_output= lidar_disc(lidar_sample)
+            lidar_sample_with_weight = lidar_sample * lidar_multiplier
+            lidar_disc_real_output= lidar_disc(lidar_sample_with_weight)
             lidar_disc_real_output = lidar_disc_real_output.view(-1)
 
             lidar_disc_real_error = criterion(lidar_disc_real_output, label_real)
@@ -267,7 +277,7 @@ def train(dataloader, config, device):
             lidar_disc_real_sample_output = lidar_disc_real_error.item()
 
             # Classify all fake batch with D
-            lidar_disc_fake_output= lidar_disc(generated_lidar_sample.detach())
+            lidar_disc_fake_output= lidar_disc(generated_lidar_with_weight.detach())
             lidar_disc_fake_output = lidar_disc_fake_output.view(-1)
 
 
@@ -315,8 +325,8 @@ def train(dataloader, config, device):
             del label_real, label_fake
             del generated_lidar_sample
 
-
-
+        lidar_gen_scheduler.step()
+        lidar_disc_scheduler.step()
 
         plt.figure(figsize=(20, 14))
         plt.title("GAN Losses  During Training")
@@ -342,10 +352,8 @@ def train(dataloader, config, device):
 
 def main(opts):
     load_config(opts.config)
-    print(config)
     dataloader = lidar_camera_dataloader(config)
     device = torch.device("cuda:0" if (torch.cuda.is_available() and config.NUM_GPUS > 0) else "cpu")
-    print(device)
     train(dataloader,config, device)
 
 
