@@ -1,13 +1,12 @@
 import numpy as np
 import sys
 import matplotlib.pyplot as plt
-import matplotlib
 import torch
 from skimage import data, segmentation, color
 from skimage.future import graph
 
-number = sys.argv[1]
-path = "/home/fatih/my_git/sensorgan/outputs/examples/"
+#number = sys.argv[1]
+path = "/home/fatih/my_git/sensorgan/outputs/lidar_examples/"
 
 #
 # If torch is not available
@@ -45,31 +44,30 @@ def turn_back_to_oneD(data):
     return new_version.numpy()
 
 
-generated = np.load(path+number+"_generated_.npz")["data"]
-expected_camera = np.load(path+number+"_expected_lidar_.npz")["data"]
-given_lidar = np.load(path+number+"_given_camera_.npz")["data"]
-
-
-
 colors = ['black','green','yellow','red','blue']
 label = [0,1,2,3,4]
+for i in range(0,99):
+    number = str(i)
+    generated = np.load(path+number+"_generated_.npz")["data"]
+    expected_camera = np.load(path+number+"_expected_lidar_.npz")["data"]
+    given_lidar = np.load(path+number+"_given_camera_.npz")["data"]
 
-fig = plt.figure(num=None, figsize=(25, 12), dpi=100, facecolor='w', edgecolor='k')
-fig.subplots_adjust(hspace=0.1, wspace=0.1)
-plt.subplot(3, 1, 1)
-plt.imshow(color.label2rgb(turn_back_to_oneD(given_lidar),
-                           colors=colors))
-plt.axis("off")
-plt.title("Given Camera")
-plt.subplot(3, 1, 3)
-plt.imshow(color.label2rgb(turn_back_to_oneD(expected_camera),
-                           colors=colors))
-plt.axis("off")
-plt.title("Expected Lidar")
-plt.subplot(3, 1, 2)
-plt.imshow(color.label2rgb(turn_back_to_oneD(generated),
-                           colors=colors))
-plt.axis("off")
-plt.title("Generated")
-#plt.savefig(path+number+".png" )
-plt.show()
+    fig = plt.figure(num=None, figsize=(25, 12), dpi=100, facecolor='w', edgecolor='k')
+    fig.subplots_adjust(hspace=0.1, wspace=0.1)
+    plt.subplot(3, 1, 3)
+    plt.imshow(color.label2rgb(turn_back_to_oneD(given_lidar),
+                               colors=colors))
+    plt.axis("off")
+    plt.title("Expected Camera")
+    plt.subplot(3, 1, 1)
+    plt.imshow(color.label2rgb(turn_back_to_oneD(expected_camera),
+                               colors=colors))
+    plt.axis("off")
+    plt.title("Given Lidar")
+    plt.subplot(3, 1, 2)
+    plt.imshow(color.label2rgb(turn_back_to_oneD(generated),
+                               colors=colors))
+    plt.axis("off")
+    plt.title("Generated")
+    plt.savefig(path+number+".png" )
+    #plt.show()

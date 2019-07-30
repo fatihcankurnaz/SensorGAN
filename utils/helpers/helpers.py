@@ -21,7 +21,14 @@ def save_vanilla_model(config, sensor1_gen, sensor1_dis, optimizer_sensor1_gen, 
         'sensor1_gen': sensor1_gen.state_dict(),
         'sensor1_dis': sensor1_dis.state_dict(),
         'optimizer_sensor1_gen': optimizer_sensor1_gen.state_dict(),
-        'optimizer_sensor1_dis': optimizer_sensor1_dis.state_dict(),
+        'optimizer_sensor1_dis': optimizer_sensor1_dis.state_dict()
+    }, config.TRAIN.SAVE_WEIGHTS+str(epoch))
+
+def save_generator(config, sensor1_gen, optimizer_sensor1_gen, epoch):
+
+    torch.save({
+        'sensor1_gen': sensor1_gen.state_dict(),
+        'optimizer_sensor1_gen': optimizer_sensor1_gen.state_dict()
     }, config.TRAIN.SAVE_WEIGHTS+str(epoch))
 
 def display_two_images(image1, image2):

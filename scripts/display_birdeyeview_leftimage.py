@@ -23,11 +23,11 @@ import matplotlib.image as mpimg
 import sys
 
 
-image_root_path = "/SPACE/kan/Data/KITTI_raw_data/kitti/2011_09_26"
-trans_root_path = "/SPACE/kan/Data/KITTI_labeledPC_with_BBs/TransformationMatrix"
-bbs2d_root_path = "/SPACE/kan/Data/KITTI_labeledPC_with_BBs/BBs_2d/2011_09_26"
-bbs3d_root_path = "/SPACE/kan/Data/KITTI_labeledPC_with_BBs/BBs_3d/2011_09_26"
-label_root_path = "/SPACE/kan/Data/KITTI_labeledPC_with_BBs/2011_09_26"
+image_root_path = "/SPACE/DATA/KITTI_Data/KITTI_raw_data/kitti/2011_09_26"
+trans_root_path = "/SPACE/DATA/KITTI_Data/KITTI_labeledPC_with_BBs/TransformationMatrix"
+bbs2d_root_path = "/SPACE/DATA/KITTI_Data/KITTI_labeledPC_with_BBs/BBs_2d/2011_09_26"
+bbs3d_root_path = "/SPACE/DATA/KITTI_Data/KITTI_labeledPC_with_BBs/BBs_3d/2011_09_26"
+label_root_path = "/SPACE/DATA/KITTI_Data/KITTI_labeledPC_with_BBs/2011_09_26"
 
 
 

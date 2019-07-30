@@ -208,10 +208,10 @@ class Generator(nn.Module):
         self.up7 = UNetUp(32, 8)
 
         self.final = nn.Sequential(
-            nn.Upsample(scale_factor=2),
+            nn.Upsample(size=(375,1242)),
             nn.ZeroPad2d((1, 0, 1, 0)),
             nn.Conv2d(16, out_channels, 4, padding=1),
-            nn.Softmax2d(),
+            #nn.Softmax2d(),
         )
 
     def forward(self, x):
@@ -232,5 +232,4 @@ class Generator(nn.Module):
         u5 = self.up5(u4, d3)
         u6 = self.up6(u5, d2)
         u7 = self.up7(u6, d1)
-
         return self.final(u7)
