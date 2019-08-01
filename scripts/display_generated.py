@@ -5,9 +5,25 @@ import matplotlib
 import torch
 from skimage import data, segmentation, color
 from skimage.future import graph
+import optparse
 
-number = sys.argv[1]
-path = "/home/fatih/my_git/sensorgan/outputs/weighted_cam_examples/"
+parser = optparse.OptionParser()
+
+parser.add_option('-o', '--one', dest="num", action="store", type="int",
+                  help="display only one output")
+parser.add_option('-p', '--path', dest="path", action="store", type="string",
+                  help="path to the files and no ending \"/\" ")
+parser.add_option('-i', '--interval', dest="interval", action="store", type="string",
+                  help="give an interval of numbers ex 1-14")
+parser.add_option('-s', '--save', dest="save", action="store_true", default=False,
+                  help="save the generated visual, if this is selected nothing will be shown")
+parser.add_option('-v', '--verbose', dest="verbose", action="store_true", default=False,
+                  help="print more information")
+parser.add_option('-l', '--lidar_to_cam', dest="l_to_c", action="store_true", default=False,
+                  help="whether output is lidar to cam or not")
+
+#number = sys.argv[1]
+#path = "/home/fatih/my_git/sensorgan/outputs/lidar_to_cam_examples/"
 
 #
 # If torch is not available
@@ -29,47 +45,84 @@ path = "/home/fatih/my_git/sensorgan/outputs/weighted_cam_examples/"
 #             real_version[i][j] = dim_type
 #     return real_version
 
-def turn_back_to_oneD(data):
+def turn_back_to_oneD(data, options):
+    # applies argmax
     torch_version = torch.from_numpy(data).view(1, 5, -1, 1242)
-    print("data", torch_version.shape)
-
     new_version = torch.max(torch_version, dim=1)[1].view(-1,1242)
     maxes = torch.max(torch_version, dim=1)[1].view(-1)
-    print(maxes)
     count = 0
-    for i in maxes:
-        if i != 0:
-            count+=1
-    print(count)
-    print("max, ", new_version.shape )
+    # counts number of valid class points
+    if options.verbose is True:
+        for i in maxes:
+            if i != 0:
+                count+=1
+        print(count)
     return new_version.numpy()
 
 
-generated = np.load(path+number+"_generated_.npz")["data"]
-expected_camera = np.load(path+number+"_lidar_.npz")["data"]
-given_lidar = np.load(path+number+"_camera_.npz")["data"]
+if __name__ == "__main__":
+    options, args = parser.parse_args()
+    print(options)
+    path = options.path + "/"
+    colors = ['black', 'green', 'yellow', 'red', 'blue']
+    label = [0, 1, 2, 3, 4]
+
+    if options.num is not None:
+        start = options.num
+        end = start+1
+    elif options.interval is not None:
+        start = int(options.interval.split("-")[0])
+        end = int(options.interval.split("-")[1])
+    else:
+        start = 0
+        end = 0
+        print("Wrong input parameters")
+
+    for number in range(start, end):
+        print("Generating, ",number)
+        generated = np.load(path + str(number) + "_generated_.npz")["data"]
+        lidar = np.load(path + str(number) + "_lidar_.npz")["data"]
+        camera = np.load(path + str(number) + "_camera_.npz")["data"]
+        options, args = parser.parse_args()
 
 
+        fig = plt.figure(num=None, figsize=(25, 12), dpi=100, facecolor='w', edgecolor='k')
+        fig.subplots_adjust(hspace=0.1, wspace=0.1)
 
-colors = ['black','green','yellow','red','blue']
-label = [0,1,2,3,4]
+        if options.verbose is True:
+            print("Lidar")
+        if options.l_to_c is True:
+            plt.subplot(3, 1, 1)
+            plt.title("Given Lidar")
+        else:
+            plt.subplot(3, 1, 3)
+            plt.title("Expected Lidar")
+        plt.imshow(color.label2rgb(turn_back_to_oneD(lidar, options),
+                                   colors=colors))
+        plt.axis("off")
 
-fig = plt.figure(num=None, figsize=(25, 12), dpi=100, facecolor='w', edgecolor='k')
-fig.subplots_adjust(hspace=0.1, wspace=0.1)
-plt.subplot(3, 1, 3)
-plt.imshow(color.label2rgb(turn_back_to_oneD(given_lidar),
-                           colors=colors))
-plt.axis("off")
-plt.title("Expected Camera")
-plt.subplot(3, 1, 1)
-plt.imshow(color.label2rgb(turn_back_to_oneD(expected_camera),
-                           colors=colors))
-plt.axis("off")
-plt.title("Given Lidar")
-plt.subplot(3, 1, 2)
-plt.imshow(color.label2rgb(turn_back_to_oneD(generated),
-                           colors=colors))
-plt.axis("off")
-plt.title("Generated")
-#plt.savefig(path+number+".png" )
-plt.show()
+
+        if options.verbose is True:
+            print("Camera")
+        if options.l_to_c is True:
+            plt.subplot(3, 1, 3)
+            plt.title("Expected Camera")
+        else:
+            plt.subplot(3, 1, 1)
+            plt.title("Given Camera")
+        plt.imshow(color.label2rgb(turn_back_to_oneD(camera, options),
+                                   colors=colors))
+        plt.axis("off")
+
+
+        if options.verbose is True:
+            print("Generated")
+        plt.subplot(3, 1, 2)
+        plt.imshow(color.label2rgb(turn_back_to_oneD(generated, options),
+                                   colors=colors))
+        plt.axis("off")
+        plt.title("Generated")
+        if options.save is True:
+            plt.savefig(path+str(number)+".png")
+        else:
+            plt.show()
