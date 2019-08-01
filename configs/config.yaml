@@ -2,24 +2,24 @@ NUM_GPUS: 2
 DATALOADER:
   WORKERS: 4
   SHUFFLE: True
-  LIDAR_DATA_PATH: "/home/fatih/Inputs/CameraData"
-  CAMERA_DATA_PATH: "/home/fatih/Inputs/LidarData"
+  LIDAR_DATA_PATH: "/home/fatih/Inputs/LidarData"
+  CAMERA_DATA_PATH: "/home/fatih/Inputs/CameraData"
 LIDAR_GENERATOR:
-  BASE_LR: 0.0002
-  STEP_SIZE: 3
-  STEP_GAMMA: 0.2
+  BASE_LR: 0.0001
+  STEP_SIZE: 5
+  STEP_GAMMA: 0.5
 LIDAR_DISCRIMINATOR:
   BASE_LR: 0.00001
-  STEP_SIZE: 3
-  STEP_GAMMA: 0.2
+  STEP_SIZE: 5
+  STEP_GAMMA: 0.5
 CAMERA_GENERATOR:
   BASE_LR: 0.0001
-  STEP_SIZE: 3
-  STEP_GAMMA: 0.1
+  STEP_SIZE: 5
+  STEP_GAMMA: 0.5
 CAMERA_DISCRIMINATOR:
   BASE_LR: 0.00001
-  STEP_SIZE: 3
-  STEP_GAMMA: 0.1
+  STEP_SIZE: 5
+  STEP_GAMMA: 0.5
 TRAIN:
   BATCH_SIZE: 16
   SAVE_AT: 5
@@ -29,6 +29,6 @@ TRAIN:
   SAVE_WEIGHTS: "/home/fatih/my_git/sensorgan/outputs/saved_models/"
   DISCRIMINATOR_CRITERION_REDUCTION: "mean"
   CYCLE_LOSS_REDUCTION: "mean"
-  EXAMPLE_SAVE_PATH: "/home/fatih/my_git/sensorgan/outputs/weighted_cam_examples/"
-  GRAPH_SAVE_PATH: "/home/fatih/my_git/sensorgan/outputs/weighted_cam_graphs/"
+  EXAMPLE_SAVE_PATH: "/home/fatih/my_git/sensorgan/outputs/lidar_to_cam_examples/"
+  GRAPH_SAVE_PATH: "/home/fatih/my_git/sensorgan/outputs/lidar_to_cam_graphs/"
 OUTPUT_DIR: ""

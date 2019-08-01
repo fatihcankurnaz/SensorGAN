@@ -211,7 +211,7 @@ class Generator(nn.Module):
             nn.Upsample(size=(375,1242)),
             nn.ZeroPad2d((1, 0, 1, 0)),
             nn.Conv2d(16, out_channels, 4, padding=1),
-            #nn.Softmax2d(),
+            # nn.Softmax2d(),
         )
 
     def forward(self, x):

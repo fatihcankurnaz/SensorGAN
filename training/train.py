@@ -14,12 +14,13 @@ from utils.helpers.helpers import display_two_images
 
 
 from Generator import Generator
-from Discriminator import Discriminator
+from Discriminator import Discriminator, PixelDiscriminator
 
 
 import torch.optim as optim
 import torch.nn as nn
 import torch
+from torch.autograd import Variable
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -79,15 +80,16 @@ def train(dataloader, config, device):
     # camera_weights = torch.tensor([
     #     1.0, 1.9927091, 3.7835522, 8.9179244, 9.8553588]).to(device=device, dtype=torch.float)
     # criterion = nn.CrossEntropyLoss( reduction=config.TRAIN.DISCRIMINATOR_CRITERION_REDUCTION)
-    criterion = nn.BCEWithLogitsLoss(reduction=config.TRAIN.DISCRIMINATOR_CRITERION_REDUCTION)
+    # criterion = nn.BCELoss(reduction=config.TRAIN.DISCRIMINATOR_CRITERION_REDUCTION)
+    criterion_cam_to_lidar = nn.MSELoss(reduction=config.TRAIN.DISCRIMINATOR_CRITERION_REDUCTION)
     real_sample_label = 1
     fake_sample_label = 0
 
     # each sensor should have their own Generator and Discriminator because their input size will probably not match
     lidar_gen = Generator(5, 5, config.NUM_GPUS).to(device)
     # camera_gen = Generator(5, 5, config.NUM_GPUS).to(device)
-    lidar_disc = Discriminator(5, config.NUM_GPUS).to(device)
-    # camera_disc = Discriminator(5, config.NUM_GPUS).to(device)
+    lidar_disc = PixelDiscriminator(5, config.NUM_GPUS).to(device)
+    # camera_disc = PixelDiscriminator(5, config.NUM_GPUS).to(device)
 
     # if (device.type == 'cuda') and (config.NUM_GPUS > 1):
     #
@@ -107,7 +109,8 @@ def train(dataloader, config, device):
                                                     step_size=config.LIDAR_GENERATOR.STEP_SIZE,
                                                     gamma=config.LIDAR_GENERATOR.STEP_GAMMA)
     # optimizer_camera_gen = optim.Adam(camera_gen.parameters(), lr=config.CAMERA_GENERATOR.BASE_LR)
-    # camera_gen_scheduler = optim.lr_scheduler.StepLR(optimizer_camera_gen, step_size=config.CAMERA_GENERATOR.STEP_SIZE,
+    # camera_gen_scheduler = optim.lr_scheduler.StepLR(optimizer_camera_gen,
+    #                                                  step_size=config.CAMERA_GENERATOR.STEP_SIZE,
     #                                                 gamma=config.CAMERA_GENERATOR.STEP_GAMMA)
     optimizer_lidar_disc = optim.Adam(lidar_disc.parameters(), lr=config.LIDAR_DISCRIMINATOR.BASE_LR)
     lidar_disc_scheduler = optim.lr_scheduler.StepLR(optimizer_lidar_disc,
@@ -145,12 +148,9 @@ def train(dataloader, config, device):
         for current_batch, data in enumerate(dataloader, 0):
             if len(dataloader) - current_batch< config.TRAIN.BATCH_SIZE:
                 continue
-            label_real = torch.full((config.TRAIN.BATCH_SIZE,), real_sample_label, device=device)
-            label_fake = torch.full((config.TRAIN.BATCH_SIZE,), fake_sample_label, device=device)
 
-            label_real = label_real.cuda()
-            label_fake = label_fake.cuda()
-
+            label_real = Variable(torch.cuda.FloatTensor(np.ones((config.TRAIN.BATCH_SIZE, 1,23,77))), requires_grad=False)
+            label_fake =  Variable(torch.cuda.FloatTensor(np.zeros((config.TRAIN.BATCH_SIZE, 1,23,77))), requires_grad=False)
 
             #display_two_images(data["camera_data"][0], data["lidar_data"][0])
             camera_sample = data["camera_data"].to(device = device, dtype=torch.float)
@@ -159,34 +159,31 @@ def train(dataloader, config, device):
             ################################################################################
             #                               Zero Gradients
             ################################################################################
-            #lidar_gen.zero_grad()
 
-            #lidar_disc.zero_grad()
+            optimizer_lidar_gen.zero_grad()
+            # optimizer_camera_gen.zero_grad()
+            optimizer_lidar_disc.zero_grad()
+            # optimizer_camera_disc.zero_grad()
 
-
-            #optimizer_lidar_gen.zero_grad()
-            #optimizer_camera_gen.zero_grad()
-            #optimizer_lidar_disc.zero_grad()
-            #optimizer_camera_disc.zero_grad()
-
-            ################################################################################
-            #                           Camera Generator
-            ################################################################################
+            ###############################################################################
+            #                          Camera Generator
+            ###############################################################################
             #
             # camera_gen.zero_grad()
             #
             # # By using lidar samples as input we generate Camera data
             # generated_camera_sample = camera_gen(lidar_sample)
             #
-            # #disc_on_fake_sample_gen = camera_disc(generated_camera_sample)
-            # #disc_on_fake_sample_gen = disc_on_fake_sample_gen.view(-1)
+            # camera_disc_on_generated = camera_disc(generated_camera_sample, lidar_sample)
             #
-            # #generated_segmented_view = torch.max(generated_camera_sample, dim=1)
-            # #real_segmented_view = torch.max(camera_sample, dim=1)
-            # error = criterion(generated_camera_sample, camera_sample )
-            # error.backward()
+            # # disc_on_fake_sample_gen = disc_on_fake_sample_gen.view(-1)
+            #
+            # # generated_segmented_view = torch.max(generated_camera_sample, dim=1)
+            # # real_segmented_view = torch.max(camera_sample, dim=1)
+            # camera_gen_error = criterion_cam_to_lidar(camera_disc_on_generated, label_real )
+            # camera_gen_error.backward()
             # optimizer_camera_gen.step()
-            # #m Measure the generators capacity to trick discriminator
+            # # m Measure the generators capacity to trick discriminator
             # # fix after checking generator
             # # fake_sample_error_gen = criterion(disc_on_fake_sample_gen, label_real)
             # #
@@ -195,41 +192,68 @@ def train(dataloader, config, device):
             # #
             # #
             # # camera_gen_output = disc_on_fake_sample_gen.mean().item()
-
-
-
-
-            ################################################################################
-            #                           Camera Discriminator
-            ################################################################################
-            # open after checking the generator
+            #
+            #
+            #
+            #
+            # ################################################################################
+            # #                           Camera Discriminator
+            # ################################################################################
+            # # open after checking the generator
             # camera_disc.zero_grad()
-            #
-            # real_data_output = camera_disc(camera_sample)
-            # real_data_output = real_data_output.view(-1)
-            #
-            # real_sample_error = criterion(real_data_output, label_real)
-            #
-            # real_sample_error.backward()
-            #
-            # camera_disc_real_sample_output = real_data_output.mean().item()
-            #
-            # # Classify all fake batch with D
-            # disc_on_fake_sample = camera_disc(generated_camera_sample.detach())
-            # disc_on_fake_sample = disc_on_fake_sample.view(-1)
+            # #
+            # camera_disc_real_output = camera_disc(camera_sample, lidar_sample)
             #
             #
-            # # Calculate D's loss on the all-fake batch
-            # fake_sample_error_disc = criterion(disc_on_fake_sample, label_fake)
+            # camera_disc_real_error = criterion_cam_to_lidar(camera_disc_real_output, label_real)
+            # #
+            # # real_sample_error.backward()
+            # #
+            # # camera_disc_real_sample_output = real_data_output.mean().item()
+            # #
+            # # # Classify all fake batch with D
+            # camera_disc_fake_output= camera_disc(generated_camera_sample.detach(), lidar_sample)
             #
-            # # Calculate the gradients for this batch
-            # fake_sample_error_disc.backward()
-            #
-            # camera_disc_fake_sample_output = disc_on_fake_sample.mean().item()
-            #
-            #
-            # sum_of_disc_errors = real_sample_error.item()+ fake_sample_error_disc.item()
+            # #
+            # #
+            # # # Calculate D's loss on the all-fake batch
+            # camera_disc_fake_error = criterion_cam_to_lidar(camera_disc_fake_output, label_fake)
+            # camera_disc_total_error = camera_disc_fake_error + camera_disc_real_error
+            # camera_disc_total_error.backward()
             # optimizer_camera_disc.step()
+            # #
+            # # # Calculate the gradients for this batch
+            # # fake_sample_error_disc.backward()
+            # #
+            # # camera_disc_fake_sample_output = disc_on_fake_sample.mean().item()
+            # #
+            # #
+            # # sum_of_disc_errors = real_sample_error.item()+ fake_sample_error_disc.item()
+            # # optimizer_camera_disc.step()
+            # if current_batch % 5 == 0:
+            #     print(
+            #         '[%d/%d][%d/%d]\t\t Lidar to Camera GAN Loss_D Real/Fake: %.4f/ %.4f = %.4f \t'
+            #         'Loss_G: %.4f\tD(x): %.4f\tD(G(z)): %.4f  '
+            #         % (epoch, config.TRAIN.MAX_EPOCH, current_batch, len(dataloader),
+            #            camera_disc_real_error.item(), camera_disc_fake_error.item(), camera_disc_total_error,
+            #            camera_gen_error.item(), camera_disc_real_output.mean().item(),
+            #            camera_disc_fake_output.mean().item()))
+            #
+            # camera_gen_losses.append(camera_gen_error.item())
+            # camera_disc_losses.append(camera_disc_total_error.item())
+            #
+            # if current_batch == 0:
+            #     with torch.no_grad():
+            #         fakeCamera = camera_gen(test_lidar.detach())
+            #         #example_lidar_output.append(fakeLidar)
+            #         np.savez_compressed(config.TRAIN.EXAMPLE_SAVE_PATH + str(epoch) + "_generated_",
+            #                             data=fakeCamera[-1].cpu().numpy())
+            #         np.savez_compressed(config.TRAIN.EXAMPLE_SAVE_PATH + str(epoch) + "_lidar_",
+            #                             data=test_lidar[-1].cpu().numpy())
+            #         np.savez_compressed(config.TRAIN.EXAMPLE_SAVE_PATH + str(epoch) + "_camera_",
+            #                             data=test_camera[-1].cpu().numpy())
+            #
+            # del generated_camera_sample
 
             ################################################################################
             #                           Lidar Generator
@@ -239,92 +263,71 @@ def train(dataloader, config, device):
 
             # By using lidar samples as input we generate Camera data
             generated_lidar_sample = lidar_gen(camera_sample)
-            generated_lidar_with_weight = generated_lidar_sample * lidar_multiplier
-            disc_on_fake_lidar_sample_gen = lidar_disc(generated_lidar_with_weight)
-            disc_on_fake_lidar_sample_gen = disc_on_fake_lidar_sample_gen.view(-1)
+            #generated_lidar_with_weight = generated_lidar_sample * lidar_multiplier
+
+            lidar_disc_on_generated = lidar_disc(generated_lidar_sample, camera_sample)
+
 
             # generated_segmented_view = torch.max(generated_camera_sample, dim=1)
             # real_segmented_view = torch.max(camera_sample, dim=1)
             # with torch.no_grad():
             #     new_version = torch.max(lidar_sample, dim=1)[1].view(config.TRAIN.BATCH_SIZE, -1, 1242)
-            # lidar_error = criterion(generated_lidar_sample, lidar_sample)
-            # lidar_error.backward()
 
             # m Measure the generators capacity to trick discriminator
-            # fix after checking generator
-            lidar_gen_error = criterion(disc_on_fake_lidar_sample_gen, label_real)
-            #
-            # # Calculate gradients for G
+            lidar_gen_error = criterion_cam_to_lidar(lidar_disc_on_generated, label_real)
             lidar_gen_error.backward()
-            #
-            #
-            lidar_gen_output = disc_on_fake_lidar_sample_gen.mean().item()
             optimizer_lidar_gen.step()
+
 
             ################################################################################
             #                           Lidar Discriminator
             ################################################################################
-            # open after checking the generator
             lidar_disc.zero_grad()
-            lidar_sample_with_weight = lidar_sample * lidar_multiplier
-            lidar_disc_real_output= lidar_disc(lidar_sample_with_weight)
-            lidar_disc_real_output = lidar_disc_real_output.view(-1)
+            lidar_disc_real_output = lidar_disc(lidar_sample, camera_sample)
 
-            lidar_disc_real_error = criterion(lidar_disc_real_output, label_real)
+            lidar_disc_real_error = criterion_cam_to_lidar(lidar_disc_real_output, label_real)
+            # # Classify all fake batch with D
+            lidar_disc_fake_output = lidar_disc(generated_lidar_sample.detach(), camera_sample)
 
-            lidar_disc_real_error.backward()
-
-            lidar_disc_real_sample_output = lidar_disc_real_error.item()
-
-            # Classify all fake batch with D
-            lidar_disc_fake_output= lidar_disc(generated_lidar_with_weight.detach())
-            lidar_disc_fake_output = lidar_disc_fake_output.view(-1)
-
-
-            # Calculate D's loss on the all-fake batch
-            lidar_disc_fake_error = criterion(lidar_disc_fake_output, label_fake)
-
-            # Calculate the gradients for this batch
-            lidar_disc_fake_error.backward()
-
-            lidar_disc_fake_sample_output = lidar_disc_fake_output.mean().item()
-
-            sum_of_lidar_disc_errors = lidar_disc_real_error.item() + lidar_disc_fake_error.item()
+            # # Calculate D's loss on the all-fake batch
+            lidar_disc_fake_error = criterion_cam_to_lidar(lidar_disc_fake_output, label_fake)
+            lidar_disc_total_error = lidar_disc_fake_error + lidar_disc_real_error
+            lidar_disc_total_error.backward()
             optimizer_lidar_disc.step()
 
-            # open after checking the generator
+
             if current_batch % 5 == 0:
                 print(
                     '[%d/%d][%d/%d]\t\t Camera to Lidar GAN Loss_DF/R: %.4f/ %.4f = %.4f \t'
                     'Loss_G: %.4f\tD(x): %.4f\tD(G(z)): %.4f  '
                     % (epoch, config.TRAIN.MAX_EPOCH, current_batch, len(dataloader),
-                       lidar_disc_real_error.item(), lidar_disc_fake_error.item(), sum_of_lidar_disc_errors,
-                       lidar_gen_error.item(), lidar_disc_real_sample_output, lidar_disc_fake_sample_output))
+                       lidar_disc_real_error.item(), lidar_disc_fake_error.item(), lidar_disc_total_error,
+                       lidar_gen_error.item(), lidar_disc_real_output.mean().item(),
+                       lidar_disc_fake_output.mean().item()))
 
             lidar_gen_losses.append(lidar_gen_error.item())
-            lidar_disc_losses.append(sum_of_lidar_disc_errors)
-            # if current_batch % 5 == 0:
-            #     print(
-            #         '[%d/%d][%d/%d]\t\t Lidar to Cam GAN Generator Error %.4f'
-            #         % (epoch, config.TRAIN.MAX_EPOCH, current_batch, len(dataloader),
-            #            lidar_error.item() ) )
-            #
-            # camera_gen_loss.append(lidar_error.item())
-            #camera_disc_loss.append(fake_sample_error_disc.item() + real_sample_error.item())
+            lidar_disc_losses.append(lidar_disc_total_error.item())
+
             if current_batch == 0:
                 with torch.no_grad():
                     fakeLidar = lidar_gen(test_camera.detach())
                     #example_lidar_output.append(fakeLidar)
                     np.savez_compressed(config.TRAIN.EXAMPLE_SAVE_PATH + str(epoch) + "_generated_",
                                         data=fakeLidar[-1].cpu().numpy())
-                    np.savez_compressed(config.TRAIN.EXAMPLE_SAVE_PATH + str(epoch) + "_expected_lidar_",
+                    np.savez_compressed(config.TRAIN.EXAMPLE_SAVE_PATH + str(epoch) + "_lidar_",
                                         data=test_lidar[-1].cpu().numpy())
-                    np.savez_compressed(config.TRAIN.EXAMPLE_SAVE_PATH + str(epoch) + "_given_camera_",
+                    np.savez_compressed(config.TRAIN.EXAMPLE_SAVE_PATH + str(epoch) + "_camera_",
                                         data=test_camera[-1].cpu().numpy())
-            del camera_sample, lidar_sample
-            del label_real, label_fake
+
+
             del generated_lidar_sample
 
+            del camera_sample, lidar_sample
+            del label_real, label_fake
+
+
+        # camera_gen_scheduler.step()
+        # camera_disc_scheduler.step()
         lidar_gen_scheduler.step()
         lidar_disc_scheduler.step()
 
