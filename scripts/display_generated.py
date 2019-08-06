@@ -22,28 +22,7 @@ parser.add_option('-v', '--verbose', dest="verbose", action="store_true", defaul
 parser.add_option('-l', '--lidar_to_cam', dest="l_to_c", action="store_true", default=False,
                   help="whether output is lidar to cam or not")
 
-#number = sys.argv[1]
-#path = "/home/fatih/my_git/sensorgan/outputs/lidar_to_cam_examples/"
 
-#
-# If torch is not available
-# def turn_back_to_oneD(data):
-#
-#     real_version = np.zeros((375, 1242))
-#
-#
-#     for i in range(0, 374):
-#         for j in range(0, 1241):
-#             dim_val = -1
-#             dim_type = -1
-#             for dim in range(0, 5):
-#                 if data[dim][i][j] > dim_val:
-#                     dim_val = data[dim][i][j]
-#                     dim_type = dim
-#
-#
-#             real_version[i][j] = dim_type
-#     return real_version
 
 def turn_back_to_oneD(data, options):
     # applies argmax
@@ -62,8 +41,9 @@ def turn_back_to_oneD(data, options):
 
 if __name__ == "__main__":
     options, args = parser.parse_args()
-    print(options)
+
     path = options.path + "/"
+
     colors = ['black', 'green', 'yellow', 'red', 'blue']
     label = [0, 1, 2, 3, 4]
 
@@ -80,9 +60,12 @@ if __name__ == "__main__":
 
     for number in range(start, end):
         print("Generating, ",number)
-        generated = np.load(path + str(number) + "_generated_.npz")["data"]
-        lidar = np.load(path + str(number) + "_lidar_.npz")["data"]
-        camera = np.load(path + str(number) + "_camera_.npz")["data"]
+        generated1 = np.load(path + str(number) + "_generated_1.npz")["data"]
+        lidar1 = np.load(path + str(number) + "_lidar_1.npz")["data"]
+        camera1 = np.load(path + str(number) + "_camera_1.npz")["data"]
+        generated2 = np.load(path + str(number) + "_generated_2.npz")["data"]
+        lidar2 = np.load(path + str(number) + "_lidar_2.npz")["data"]
+        camera2 = np.load(path + str(number) + "_camera_2.npz")["data"]
         options, args = parser.parse_args()
 
 
@@ -90,38 +73,74 @@ if __name__ == "__main__":
         fig.subplots_adjust(hspace=0.1, wspace=0.1)
 
         if options.verbose is True:
-            print("Lidar")
+            print("Lidar1")
         if options.l_to_c is True:
-            plt.subplot(3, 1, 1)
-            plt.title("Given Lidar")
+            plt.subplot(3, 2, 1)
+            plt.title("Given Lidar1")
         else:
-            plt.subplot(3, 1, 3)
-            plt.title("Expected Lidar")
-        plt.imshow(color.label2rgb(turn_back_to_oneD(lidar, options),
+            plt.subplot(3, 2, 5)
+            plt.title("Expected Lidar1")
+        plt.imshow(color.label2rgb(turn_back_to_oneD(lidar1, options),
                                    colors=colors))
         plt.axis("off")
 
 
         if options.verbose is True:
-            print("Camera")
+            print("Camera1")
         if options.l_to_c is True:
-            plt.subplot(3, 1, 3)
-            plt.title("Expected Camera")
+            plt.subplot(3, 2, 5)
+            plt.title("Expected Camera1")
         else:
-            plt.subplot(3, 1, 1)
-            plt.title("Given Camera")
-        plt.imshow(color.label2rgb(turn_back_to_oneD(camera, options),
+            plt.subplot(3, 2, 1)
+            plt.title("Given Camera1")
+        plt.imshow(color.label2rgb(turn_back_to_oneD(camera1, options),
                                    colors=colors))
         plt.axis("off")
 
 
         if options.verbose is True:
-            print("Generated")
-        plt.subplot(3, 1, 2)
-        plt.imshow(color.label2rgb(turn_back_to_oneD(generated, options),
+            print("Generated1")
+        plt.subplot(3, 2, 3)
+        plt.imshow(color.label2rgb(turn_back_to_oneD(generated1, options),
                                    colors=colors))
         plt.axis("off")
-        plt.title("Generated")
+        plt.title("Generated1")
+
+
+
+        if options.verbose is True:
+            print("Lidar2")
+        if options.l_to_c is True:
+            plt.subplot(3, 2, 2)
+            plt.title("Given Lidar2")
+        else:
+            plt.subplot(3, 2, 6)
+            plt.title("Expected Lidar2")
+        plt.imshow(color.label2rgb(turn_back_to_oneD(lidar2, options),
+                                   colors=colors))
+        plt.axis("off")
+
+
+        if options.verbose is True:
+            print("Camera2")
+        if options.l_to_c is True:
+            plt.subplot(3, 2, 6)
+            plt.title("Expected Camera2")
+        else:
+            plt.subplot(3, 2, 2)
+            plt.title("Given Camera2")
+        plt.imshow(color.label2rgb(turn_back_to_oneD(camera2, options),
+                                   colors=colors))
+        plt.axis("off")
+
+
+        if options.verbose is True:
+            print("Generated2")
+        plt.subplot(3, 2, 4)
+        plt.imshow(color.label2rgb(turn_back_to_oneD(generated2, options),
+                                   colors=colors))
+        plt.axis("off")
+        plt.title("Generated2")
         if options.save is True:
             plt.savefig(path+str(number)+".png")
         else:

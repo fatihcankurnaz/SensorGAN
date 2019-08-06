@@ -10,11 +10,11 @@ from os.path import join, isdir
 import os
 from shutil import copyfile
 
-
+# Used to determine class inbalance
 
 label_root_path = "/home/fatih/Inputs/CameraData"
 
-
+# traverse paths
 def random_paths(image_number):
 
     rand = image_number
