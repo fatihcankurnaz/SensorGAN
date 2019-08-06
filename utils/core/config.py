@@ -51,7 +51,11 @@ config.TRAIN.CYCLE_LOSS_REDUCTION = "mean"
 config.TRAIN.EXAMPLE_SAVE_PATH = ""
 config.TRAIN.GRAPH_SAVE_PATH = ""
 config.TRAIN.SAVE_AT = 2
+config.TRAIN.LAMBDA_GP = 10
+config.TRAIN.BETA1 = 0.9
+config.TRAIN.BETA2 = 0.999
 config.CAMERA_TO_LIDAR = True
+
 
 def fix_the_type(desired_type, given_type):
     if type(desired_type) == type(given_type):
