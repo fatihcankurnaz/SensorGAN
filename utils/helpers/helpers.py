@@ -41,3 +41,4 @@ def display_two_images(image1, image2):
     plt.axis("off")
     plt.title("SEGMENTED IMAGE")
     plt.show()
+

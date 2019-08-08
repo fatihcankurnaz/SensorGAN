@@ -8,6 +8,7 @@ LIDAR_GENERATOR:
   BASE_LR: 0.0002
   STEP_SIZE: 10
   STEP_GAMMA: 0.5
+  PIXEL_LAMBDA: 0.5
 LIDAR_DISCRIMINATOR:
   BASE_LR: 0.00001
   STEP_SIZE: 10
@@ -16,11 +17,13 @@ CAMERA_GENERATOR:
   BASE_LR: 0.0001
   STEP_SIZE: 5
   STEP_GAMMA: 0.5
+  PIXEL_LAMBDA: 10
 CAMERA_DISCRIMINATOR:
   BASE_LR: 0.00001
   STEP_SIZE: 5
   STEP_GAMMA: 0.5
 TRAIN:
+  CYCLE_LAMBDA: 10
   BETA1: 0.9
   BETA2: 0.999
   LAMBDA_GP: 10
@@ -32,6 +35,6 @@ TRAIN:
   SAVE_WEIGHTS: "/home/fatih/my_git/sensorgan/outputs/saved_models/"
   DISCRIMINATOR_CRITERION_REDUCTION: "mean"
   CYCLE_LOSS_REDUCTION: "mean"
-  EXAMPLE_SAVE_PATH: "/home/fatih/my_git/sensorgan/outputs/cam_to_lidar_examples/"
-  GRAPH_SAVE_PATH: "/home/fatih/my_git/sensorgan/outputs/cam_to_lidar_graphs/"
+  EXAMPLE_SAVE_PATH: "/home/fatih/my_git/sensorgan/outputs/cycle_gan_examples/"
+  GRAPH_SAVE_PATH: "/home/fatih/my_git/sensorgan/outputs/cycle_gan_graphs/"
 OUTPUT_DIR: ""

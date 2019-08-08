@@ -24,6 +24,7 @@ config.LIDAR_GENERATOR.BASE_LR = 0.0006
 # Change learning rate in each step_size number of iterations by multiplying it with gamma
 config.LIDAR_GENERATOR.STEP_SIZE = 5
 config.LIDAR_GENERATOR.STEP_GAMMA = 0.1
+config.LIDAR_GENERATOR.PIXEL_LAMBDA = 0.2
 
 config.LIDAR_DISCRIMINATOR = EasyDict()
 config.LIDAR_DISCRIMINATOR.BASE_LR = 0.0001
@@ -34,6 +35,7 @@ config.CAMERA_GENERATOR = EasyDict()
 config.CAMERA_GENERATOR.BASE_LR = 0.0001
 config.CAMERA_GENERATOR.STEP_SIZE = 5
 config.CAMERA_GENERATOR.STEP_GAMMA = 0.1
+config.CAMERA_GENERATOR.PIXEL_LAMBDA = 0.2
 
 config.CAMERA_DISCRIMINATOR = EasyDict()
 config.CAMERA_DISCRIMINATOR.BASE_LR = 0.0001
@@ -55,7 +57,7 @@ config.TRAIN.LAMBDA_GP = 10
 config.TRAIN.BETA1 = 0.9
 config.TRAIN.BETA2 = 0.999
 config.CAMERA_TO_LIDAR = True
-
+config.TRAIN.CYCLE_LAMBDA = 10
 
 def fix_the_type(desired_type, given_type):
     if type(desired_type) == type(given_type):
