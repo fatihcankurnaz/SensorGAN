@@ -1,7 +1,7 @@
 import torch
 import matplotlib.pyplot as plt
 def save_model(config, sensor1_gen, sensor2_gen, sensor1_dis, sensor2_dis,
-               optimizer_sensor1_gen, optimizer_sensor2_gen, optimizer_sensor1_dis, optimizer_sensor2_dis):
+               optimizer_sensor1_gen, optimizer_sensor2_gen, optimizer_sensor1_dis, optimizer_sensor2_dis, epoch):
 
     torch.save({
         'sensor1_gen': sensor1_gen.state_dict(),
@@ -12,7 +12,7 @@ def save_model(config, sensor1_gen, sensor2_gen, sensor1_dis, sensor2_dis,
         'optimizer_sensor2_gen': optimizer_sensor2_gen.state_dict(),
         'optimizer_sensor1_dis': optimizer_sensor1_dis.state_dict(),
         'optimizer_sensor2_dis': optimizer_sensor2_dis.state_dict()
-    }, config.TRAIN.SAVE_WEIGHTS)
+    }, config.TRAIN.SAVE_WEIGHTS+str(epoch))
 
 
 def save_vanilla_model(config, sensor1_gen, sensor1_dis, optimizer_sensor1_gen, optimizer_sensor1_dis, epoch):

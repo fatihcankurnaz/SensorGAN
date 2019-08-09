@@ -267,8 +267,8 @@ def train(dataloader, config, device):
                     fake_lidar1 = lidar_gen(test_camera1.detach())
                     fake_camera1 = camera_gen(test_lidar1.detach())
 
-                    reconst_lidar1 = camera_gen(fake_lidar1.detach())
-                    reconst_camera1 = lidar_gen(fake_camera1.detach())
+                    reconst_camera1 = camera_gen(fake_lidar1.detach())
+                    reconst_lidar1 = lidar_gen(fake_camera1.detach())
 
                     np.savez_compressed(config.TRAIN.EXAMPLE_SAVE_PATH + str(epoch) + "_generated_lidar_1",
                                         data=fake_lidar1[-1].cpu().numpy())
@@ -285,15 +285,15 @@ def train(dataloader, config, device):
                     fake_lidar2 = lidar_gen(test_camera2.detach())
                     fake_camera2 = camera_gen(test_lidar2.detach())
 
-                    reconst_lidar2 = camera_gen(fake_lidar2.detach())
-                    reconst_camera2 = lidar_gen(fake_camera2.detach())
+                    reconst_camera2 = camera_gen(fake_lidar2.detach())
+                    reconst_lidar2 = lidar_gen(fake_camera2.detach())
                     np.savez_compressed(config.TRAIN.EXAMPLE_SAVE_PATH + str(epoch) + "_generated_lidar_2",
                                         data=fake_lidar2[-1].cpu().numpy())
                     np.savez_compressed(config.TRAIN.EXAMPLE_SAVE_PATH + str(epoch) + "_generated_camera_2",
                                         data=fake_camera2[-1].cpu().numpy())
-                    np.savez_compressed(config.TRAIN.EXAMPLE_SAVE_PATH + str(epoch) + "_reconstructed_lidar_1",
+                    np.savez_compressed(config.TRAIN.EXAMPLE_SAVE_PATH + str(epoch) + "_reconstructed_lidar_2",
                                         data=reconst_lidar2[-1].cpu().numpy())
-                    np.savez_compressed(config.TRAIN.EXAMPLE_SAVE_PATH + str(epoch) + "_reconstructed_camera_1",
+                    np.savez_compressed(config.TRAIN.EXAMPLE_SAVE_PATH + str(epoch) + "_reconstructed_camera_2",
                                         data=reconst_camera2[-1].cpu().numpy())
                     np.savez_compressed(config.TRAIN.EXAMPLE_SAVE_PATH + str(epoch) + "_lidar_2",
                                         data=test_lidar2[-1].cpu().numpy())
@@ -337,7 +337,7 @@ def train(dataloader, config, device):
         if epoch != 0 and epoch % config.TRAIN.SAVE_AT == 0:
             print("Saving Model at ", epoch)
             save_model(config, lidar_gen, camera_gen, lidar_disc, camera_disc, optimizer_lidar_gen,
-                       optimizer_camera_gen, optimizer_lidar_disc, optimizer_camera_disc)
+                       optimizer_camera_gen, optimizer_lidar_disc, optimizer_camera_disc, epoch)
 
 
 def main(opts):

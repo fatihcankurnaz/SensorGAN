@@ -21,6 +21,8 @@ parser.add_option('-v', '--verbose', dest="verbose", action="store_true", defaul
                   help="print more information")
 parser.add_option('-l', '--lidar_to_cam', dest="l_to_c", action="store_true", default=False,
                   help="whether output is lidar to cam or not")
+parser.add_option('-r', '--reconstructed', dest="reconst", action="store_true", default=False,
+                  help="reconstructed")
 
 
 
@@ -60,13 +62,24 @@ if __name__ == "__main__":
 
     for number in range(start, end):
         print("Generating, ",number)
-        generated1 = np.load(path + str(number) + "_generated_1.npz")["data"]
-        lidar1 = np.load(path + str(number) + "_lidar_1.npz")["data"]
-        camera1 = np.load(path + str(number) + "_camera_1.npz")["data"]
-        generated2 = np.load(path + str(number) + "_generated_2.npz")["data"]
-        lidar2 = np.load(path + str(number) + "_lidar_2.npz")["data"]
-        camera2 = np.load(path + str(number) + "_camera_2.npz")["data"]
-        options, args = parser.parse_args()
+        if options.reconst is False:
+            generated_lidar_1 = np.load(path + str(number) + "_generated_lidar_1.npz")["data"]
+            generated_camera_1 = np.load(path + str(number) + "_generated_camera_1.npz")["data"]
+            lidar1 = np.load(path + str(number) + "_lidar_1.npz")["data"]
+            camera1 = np.load(path + str(number) + "_camera_1.npz")["data"]
+            generated_lidar_2 = np.load(path + str(number) + "_generated_lidar_2.npz")["data"]
+            generated_camera_2 = np.load(path + str(number) + "_generated_camera_2.npz")["data"]
+            lidar2 = np.load(path + str(number) + "_lidar_2.npz")["data"]
+            camera2 = np.load(path + str(number) + "_camera_2.npz")["data"]
+        else:
+            generated_lidar_1 = np.load(path + str(number) + "_reconstructed_lidar_1.npz")["data"]
+            generated_camera_1 = np.load(path + str(number) + "_reconstructed_camera_1.npz")["data"]
+            lidar1 = np.load(path + str(number) + "_lidar_1.npz")["data"]
+            camera1 = np.load(path + str(number) + "_camera_1.npz")["data"]
+            generated_lidar_2 = np.load(path + str(number) + "_reconstructed_lidar_2.npz")["data"]
+            generated_camera_2 = np.load(path + str(number) + "_reconstructed_camera_2.npz")["data"]
+            lidar2 = np.load(path + str(number) + "_lidar_2.npz")["data"]
+            camera2 = np.load(path + str(number) + "_camera_2.npz")["data"]
 
 
         fig = plt.figure(num=None, figsize=(25, 12), dpi=100, facecolor='w', edgecolor='k')
@@ -75,10 +88,10 @@ if __name__ == "__main__":
         if options.verbose is True:
             print("Lidar1")
         if options.l_to_c is True:
-            plt.subplot(3, 2, 1)
+            plt.subplot(4, 2, 1)
             plt.title("Given Lidar1")
         else:
-            plt.subplot(3, 2, 5)
+            plt.subplot(4, 2, 3)
             plt.title("Expected Lidar1")
         plt.imshow(color.label2rgb(turn_back_to_oneD(lidar1, options),
                                    colors=colors))
@@ -88,10 +101,10 @@ if __name__ == "__main__":
         if options.verbose is True:
             print("Camera1")
         if options.l_to_c is True:
-            plt.subplot(3, 2, 5)
+            plt.subplot(4, 2, 3)
             plt.title("Expected Camera1")
         else:
-            plt.subplot(3, 2, 1)
+            plt.subplot(4, 2, 1)
             plt.title("Given Camera1")
         plt.imshow(color.label2rgb(turn_back_to_oneD(camera1, options),
                                    colors=colors))
@@ -99,22 +112,30 @@ if __name__ == "__main__":
 
 
         if options.verbose is True:
-            print("Generated1")
-        plt.subplot(3, 2, 3)
-        plt.imshow(color.label2rgb(turn_back_to_oneD(generated1, options),
+            print("Generated Lidar 1")
+        plt.subplot(4, 2, 5)
+        plt.imshow(color.label2rgb(turn_back_to_oneD(generated_lidar_1, options),
                                    colors=colors))
         plt.axis("off")
-        plt.title("Generated1")
+        plt.title("Generated Lidar 1")
+
+        if options.verbose is True:
+            print("Generated Camera 1")
+        plt.subplot(4, 2, 7)
+        plt.imshow(color.label2rgb(turn_back_to_oneD(generated_camera_1, options),
+                                   colors=colors))
+        plt.axis("off")
+        plt.title("Generated Camera 1")
 
 
 
         if options.verbose is True:
             print("Lidar2")
         if options.l_to_c is True:
-            plt.subplot(3, 2, 2)
+            plt.subplot(4, 2, 2)
             plt.title("Given Lidar2")
         else:
-            plt.subplot(3, 2, 6)
+            plt.subplot(4, 2, 4)
             plt.title("Expected Lidar2")
         plt.imshow(color.label2rgb(turn_back_to_oneD(lidar2, options),
                                    colors=colors))
@@ -124,10 +145,10 @@ if __name__ == "__main__":
         if options.verbose is True:
             print("Camera2")
         if options.l_to_c is True:
-            plt.subplot(3, 2, 6)
+            plt.subplot(4, 2, 4)
             plt.title("Expected Camera2")
         else:
-            plt.subplot(3, 2, 2)
+            plt.subplot(4, 2, 2)
             plt.title("Given Camera2")
         plt.imshow(color.label2rgb(turn_back_to_oneD(camera2, options),
                                    colors=colors))
@@ -135,12 +156,21 @@ if __name__ == "__main__":
 
 
         if options.verbose is True:
-            print("Generated2")
-        plt.subplot(3, 2, 4)
-        plt.imshow(color.label2rgb(turn_back_to_oneD(generated2, options),
+            print("Generated Lidar 2")
+        plt.subplot(4, 2, 6)
+        plt.imshow(color.label2rgb(turn_back_to_oneD(generated_lidar_2, options),
                                    colors=colors))
         plt.axis("off")
-        plt.title("Generated2")
+        plt.title("Generated Lidar 2")
+
+        if options.verbose is True:
+            print("Generated Camera 2")
+        plt.subplot(4, 2, 8)
+        plt.imshow(color.label2rgb(turn_back_to_oneD(generated_camera_2, options),
+                                   colors=colors))
+        plt.axis("off")
+        plt.title("Generated Camera 2")
+
         if options.save is True:
             plt.savefig(path+str(number)+".png")
         else:
