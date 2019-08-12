@@ -169,7 +169,7 @@ def train(dataloader, config, device):
             cycled_lidar_sample = lidar_gen(generated_camera_sample)
 
             camera_cycle_error = criterion_cycle(camera_sample, cycled_camera_sample)
-            lidar_cycle_error = criterion_cycle(lidar_sample, cycled_lidar_sample)
+            lidar_cycle_error = criterion_cycle(lidar_sample * lidar_multiplier, cycled_lidar_sample * lidar_multiplier)
 
             total_cycle_error = camera_cycle_error + lidar_cycle_error
 
@@ -186,10 +186,10 @@ def train(dataloader, config, device):
             lidar_gen_error_pixel = criterion_pixel(generated_lidar_with_weight, real_lidar_with_weight)
 
             camera_gen_error_pixel = config.CAMERA_GENERATOR.PIXEL_LAMBDA * camera_gen_error_pixel
-            lidar_gen_error = config.LIDAR_GENERATOR.PIXEL_LAMBDA * lidar_gen_error_pixel
+            lidar_gen_error_pixel = config.LIDAR_GENERATOR.PIXEL_LAMBDA * lidar_gen_error_pixel
 
             camera_gen_error = camera_gen_error_disc + camera_gen_error_pixel
-            lidar_gen_error = lidar_gen_error_disc + lidar_gen_error
+            lidar_gen_error = lidar_gen_error_disc + lidar_gen_error_pixel
 
             cycle_loss = config.TRAIN.CYCLE_LAMBDA * total_cycle_error
 
