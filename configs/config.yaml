@@ -35,6 +35,6 @@ TRAIN:
   SAVE_WEIGHTS: "/home/fatih/my_git/sensorgan/outputs/saved_models/"
   DISCRIMINATOR_CRITERION_REDUCTION: "mean"
   CYCLE_LOSS_REDUCTION: "mean"
-  EXAMPLE_SAVE_PATH: "/home/fatih/my_git/sensorgan/outputs/cycle_gan_examples/"
-  GRAPH_SAVE_PATH: "/home/fatih/my_git/sensorgan/outputs/cycle_gan_graphs/"
+  EXAMPLE_SAVE_PATH: "/home/fatih/my_git/sensorgan/outputs/examples/"
+  GRAPH_SAVE_PATH: "/home/fatih/my_git/sensorgan/outputs/graphs/"
 OUTPUT_DIR: ""
