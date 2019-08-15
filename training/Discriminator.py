@@ -47,7 +47,7 @@ class Discriminator(nn.Module):
 
 
 class PixelDiscriminator(nn.Module):
-    def __init__(self, in_channels=5, ngpu=2):
+    def __init__(self, in_channels=5, out_channels=5, ngpu=2):
         super(PixelDiscriminator, self).__init__()
         self.ngpu = ngpu
         def discriminator_block(in_filters, out_filters, normalization=True):
@@ -59,7 +59,7 @@ class PixelDiscriminator(nn.Module):
             return layers
 
         self.model = nn.Sequential(
-            *discriminator_block(in_channels*2 , 16, normalization=False),
+            *discriminator_block(in_channels + out_channels , 16, normalization=False),
             *discriminator_block(16, 32),
             *discriminator_block(32, 64),
             *discriminator_block(64, 128),

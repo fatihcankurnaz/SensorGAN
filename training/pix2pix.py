@@ -21,9 +21,12 @@ import torch.optim as optim
 import torch.nn as nn
 import torch
 from torch.autograd import Variable
+from PIL import Image
+from torchvision import transforms
+from torchvision.utils import save_image
 import numpy as np
 import matplotlib.pyplot as plt
-
+from scipy import misc
 
 torch.manual_seed(0)
 parser = optparse.OptionParser()
@@ -47,8 +50,8 @@ def train(dataloader, config, device):
     criterion_pixel = nn.L1Loss(reduction=config.TRAIN.DISCRIMINATOR_CRITERION_REDUCTION)
 
 
-    camera_gen = Generator(5, 5, config.NUM_GPUS).to(device)
-    camera_disc = PixelDiscriminator(5, config.NUM_GPUS).to(device)
+    camera_gen = Generator(5, 3, config.NUM_GPUS).to(device)
+    camera_disc = PixelDiscriminator(3, 5, config.NUM_GPUS).to(device)
 
 
     if (device.type == 'cuda') and (config.NUM_GPUS > 1):
@@ -65,22 +68,26 @@ def train(dataloader, config, device):
     camera_disc_scheduler = optim.lr_scheduler.StepLR(optimizer_camera_disc,
                                                       step_size=config.CAMERA_DISCRIMINATOR.STEP_SIZE,
                                                       gamma=config.CAMERA_DISCRIMINATOR.STEP_GAMMA)
-    test_lidar_path1 = "/home/fatih/Inputs/test/46cameraView_0000000000.npz"
-    test_camera_path1 = "/home/fatih/Inputs/test/46segmented_0000000000.npz"
+    test_rgb_path1 = \
+        "/SPACE/DATA/KITTI_Data/KITTI_raw_data/kitti/2011_09_26/2011_09_26_drive_0046_sync/image_02/data/0000000000.png"
+    test_segmented_path1 = "/home/fatih/Inputs/test/46segmented_0000000000.npz"
 
-    test_lidar_path2 = "/home/fatih/Inputs/test/01cameraView_0000000000.npz"
-    test_camera_path2 = "/home/fatih/Inputs/test/01segmented_0000000000.npz"
+    test_rgb_path2 = \
+        "/SPACE/DATA/KITTI_Data/KITTI_raw_data/kitti/2011_09_26/2011_09_26_drive_0001_sync/image_02/data/0000000000.png"
+    test_segmented_path2 = "/home/fatih/Inputs/test/01segmented_0000000000.npz"
 
-    test_lidar1 = torch.from_numpy(np.load(test_lidar_path1)["data"].reshape(1, 5, 375, 1242)).to(device=device,
-                                                                                                  dtype=torch.float)
-    test_camera1 = torch.from_numpy(np.load(test_camera_path1)["data"].reshape(1, 5, 375, 1242)).to(device=device,
+    test_rgb1 = Image.open(test_rgb_path1)
+    test_rgb1 = transforms.ToTensor()(test_rgb1)
+    test_rgb1 = test_rgb1.to(device=device, dtype=torch.float)
+    test_rgb1 = test_rgb1.view(1, 3, 375, 1242)
+    test_segmented1 = torch.from_numpy(np.load(test_segmented_path1)["data"].reshape(1, 5, 375, 1242)).to(device=device,
                                                                                                     dtype=torch.float)
 
-
-
-    test_lidar2 = torch.from_numpy(np.load(test_lidar_path2)["data"].reshape(1, 5, 375, 1242)).to(device=device,
-                                                                                                  dtype=torch.float)
-    test_camera2 = torch.from_numpy(np.load(test_camera_path2)["data"].reshape(1, 5, 375, 1242)).to(device=device,
+    test_rgb2 = Image.open(test_rgb_path2)
+    test_rgb2 = transforms.ToTensor()(test_rgb2)
+    test_rgb2 = test_rgb2.to(device=device, dtype=torch.float)
+    test_rgb2 = test_rgb2.view(1, 3, 375, 1242)
+    test_segmented2 = torch.from_numpy(np.load(test_segmented_path2)["data"].reshape(1, 5, 375, 1242)).to(device=device,
                                                                                                     dtype=torch.float)
     # camera_gen_total_params = sum(p.numel() for p in camera_gen.parameters())
     # print("Camera Generator ", camera_gen_total_params)
@@ -110,8 +117,8 @@ def train(dataloader, config, device):
             label_fake = Variable(torch.cuda.FloatTensor(np.zeros((config.TRAIN.BATCH_SIZE, 1,23,77))), requires_grad=False)
 
             #display_two_images(data["camera_data"][0], data["lidar_data"][0])
-            camera_sample = data["camera_data"].to(device = device, dtype=torch.float)
-            lidar_sample = data["lidar_data"].to(device = device, dtype=torch.float)
+            segmented_sample = data["segmented_data"].to(device = device, dtype=torch.float)
+            rgb_sample = data["rgb_data"].to(device = device, dtype=torch.float)
 
             ################################################################################
             #                               Zero Gradients
@@ -126,23 +133,13 @@ def train(dataloader, config, device):
 
             camera_gen.zero_grad()
 
-            generated_camera_sample = camera_gen(lidar_sample)
+            generated_camera_sample = camera_gen(segmented_sample)
 
-            camera_disc_on_generated = camera_disc(generated_camera_sample, lidar_sample)
+            camera_disc_on_generated = camera_disc(generated_camera_sample, segmented_sample)
 
             camera_gen_loss_disc = criterion_gan(camera_disc_on_generated, label_real)
-            camera_gen_loss_pixel =criterion_pixel(generated_camera_sample, camera_sample)
+            camera_gen_loss_pixel =criterion_pixel(generated_camera_sample, rgb_sample)
             camera_gen_loss_pixel = config.CAMERA_GENERATOR.PIXEL_LAMBDA * camera_gen_loss_pixel
-            ################################################################################
-            #                                   TEST LOSS START
-            ###############################################################################
-            lidar_mask = lidar_sample * generated_camera_sample.detach()
-            camera_lidar_point_loss = criterion_pixel(lidar_mask, generated_camera_sample)
-            camera_lidar_point_loss = config.CAMERA_GENERATOR.NEW_LOSS_LAMBDA * camera_lidar_point_loss
-            camera_gen_loss_pixel = camera_gen_loss_pixel + camera_lidar_point_loss
-            ################################################################################
-            #                                   TEST LOSS END
-            ###############################################################################
             camera_gen_loss = camera_gen_loss_disc + camera_gen_loss_pixel
             camera_gen_loss.backward()
             optimizer_camera_gen.step()
@@ -151,10 +148,10 @@ def train(dataloader, config, device):
             #                           Camera Discriminator
             ################################################################################
             camera_disc.zero_grad()
-            camera_disc_real_output = camera_disc(camera_sample, lidar_sample)
+            camera_disc_real_output = camera_disc(rgb_sample, segmented_sample)
             camera_disc_real_loss = criterion_gan(camera_disc_real_output, label_real)
 
-            camera_disc_fake_output= camera_disc(generated_camera_sample.detach(), lidar_sample)
+            camera_disc_fake_output= camera_disc(generated_camera_sample.detach(), segmented_sample)
             camera_disc_fake_loss = criterion_gan(camera_disc_fake_output, label_fake)
             camera_disc_loss = (camera_disc_fake_loss + camera_disc_real_loss) * 0.5
 
@@ -173,28 +170,31 @@ def train(dataloader, config, device):
             camera_gen_losses.append(camera_gen_loss.item())
             camera_disc_losses.append(camera_disc_loss.item())
 
-            if epoch != 0  and current_batch == 0 :
+            if epoch == 0  and current_batch == 0 :
                 with torch.no_grad():
-                    fakeCamera1 = camera_gen(test_lidar1.detach())
-                    np.savez_compressed(config.TRAIN.EXAMPLE_SAVE_PATH + str(epoch) + "_generated_camera_1",
-                                        data=fakeCamera1[-1].cpu().numpy())
-                    np.savez_compressed(config.TRAIN.EXAMPLE_SAVE_PATH + str(epoch) + "_lidar_1",
-                                        data=test_lidar1[-1].cpu().numpy())
-                    np.savez_compressed(config.TRAIN.EXAMPLE_SAVE_PATH + str(epoch) + "_camera_1",
-                                        data=test_camera1[-1].cpu().numpy())
-                    fakeCamera2 = camera_gen(test_lidar2.detach())
+                    generated1 = camera_gen(test_segmented1.detach())
+                    save_image(generated1,
+                               filename=config.TRAIN.EXAMPLE_SAVE_PATH + str(epoch) + "_generated_rgb_1.png",
+                               normalize=True)
+                    np.savez_compressed(config.TRAIN.EXAMPLE_SAVE_PATH + str(epoch) + "_segmented_1",
+                                        data=test_segmented1[-1].cpu().numpy())
+                    save_image(test_rgb1,
+                               filename=config.TRAIN.EXAMPLE_SAVE_PATH + str(epoch) + "_rgb_1.png",
+                               normalize=True)
+                    generated2 = camera_gen(test_segmented2.detach())
 
-                    np.savez_compressed(config.TRAIN.EXAMPLE_SAVE_PATH + str(epoch) + "_generated_camera_2",
-                                        data=fakeCamera2[-1].cpu().numpy())
-                    np.savez_compressed(config.TRAIN.EXAMPLE_SAVE_PATH + str(epoch) + "_lidar_2",
-                                        data=test_lidar2[-1].cpu().numpy())
-                    np.savez_compressed(config.TRAIN.EXAMPLE_SAVE_PATH + str(epoch) + "_camera_2",
-                                        data=test_camera2[-1].cpu().numpy())
+                    save_image(generated2,
+                               filename=config.TRAIN.EXAMPLE_SAVE_PATH + str(epoch) + "_generated_rgb_2.png",
+                               normalize=True)
+                    np.savez_compressed(config.TRAIN.EXAMPLE_SAVE_PATH + str(epoch) + "_segmented_2",
+                                        data=test_segmented2[-1].cpu().numpy())
+                    save_image(test_rgb2,
+                               filename=config.TRAIN.EXAMPLE_SAVE_PATH + str(epoch) + "_rgb_2.png",
+                               normalize=True)
 
             del generated_camera_sample
-            del camera_sample, lidar_sample
+            del segmented_sample, rgb_sample
             del label_real, label_fake
-
 
         camera_gen_scheduler.step()
         camera_disc_scheduler.step()
@@ -224,7 +224,9 @@ def train(dataloader, config, device):
 
 
 def main(opts):
+
     load_config(opts.config)
+
     dataloader = lidar_camera_dataloader(config)
     device = torch.device("cuda:0" if (torch.cuda.is_available() and config.NUM_GPUS > 0) else "cpu")
     train(dataloader,config, device)

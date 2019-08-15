@@ -5,27 +5,18 @@ DATALOADER:
   PIX2PIX: False
   LIDAR_DATA_PATH: "/home/fatih/Inputs/LidarData"
   CAMERA_DATA_PATH: "/home/fatih/Inputs/CameraData"
-LIDAR_GENERATOR:
-  BASE_LR: 0.0002
-  STEP_SIZE: 10
-  STEP_GAMMA: 0.5
-  PIXEL_LAMBDA: 2
-LIDAR_DISCRIMINATOR:
-  BASE_LR: 0.00001
-  STEP_SIZE: 10
-  STEP_GAMMA: 0.5
 CAMERA_GENERATOR:
   BASE_LR: 0.0002
   STEP_SIZE: 50
   STEP_GAMMA: 0.5
-  PIXEL_LAMBDA: 100
+  PIXEL_LAMBDA: 40
+  NEW_LOSS_LAMBDA: 10
 CAMERA_DISCRIMINATOR:
-  BASE_LR: 0.00001
+  BASE_LR: 0.000002
   STEP_SIZE: 50
   STEP_GAMMA: 0.5
 TRAIN:
-  CYCLE_LAMBDA: 10
-  BETA1: 0.9
+  BETA1: 0.5
   BETA2: 0.999
   LAMBDA_GP: 10
   BATCH_SIZE: 16
@@ -36,6 +27,6 @@ TRAIN:
   SAVE_WEIGHTS: "/home/fatih/my_git/sensorgan/outputs/saved_models/"
   DISCRIMINATOR_CRITERION_REDUCTION: "mean"
   CYCLE_LOSS_REDUCTION: "mean"
-  EXAMPLE_SAVE_PATH: "/home/fatih/my_git/sensorgan/outputs/examples/"
-  GRAPH_SAVE_PATH: "/home/fatih/my_git/sensorgan/outputs/graphs/"
+  EXAMPLE_SAVE_PATH: "/home/fatih/my_git/sensorgan/outputs/new_loss_examples/"
+  GRAPH_SAVE_PATH: "/home/fatih/my_git/sensorgan/outputs/new_loss_graphs/"
 OUTPUT_DIR: ""

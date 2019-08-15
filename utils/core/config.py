@@ -17,6 +17,9 @@ config.DATALOADER.WORKERS = 2
 config.DATALOADER.SHUFFLE = True
 config.DATALOADER.LIDAR_DATA_PATH = "/home/fatih/LidarLabelsCameraViewTest"
 config.DATALOADER.CAMERA_DATA_PATH = "/home/fatih/SegmentedInputTest"
+config.DATALOADER.PIX2PIX = False
+config.DATALOADER.RGB_PATH = "/SPACE/DATA/KITTI_Data/KITTI_raw_data/kitti/2011_09_26"
+config.DATALOADER.SEGMENTED_PATH = "/home/fatih/Inputs/CameraData"
 
 config.LIDAR_GENERATOR = EasyDict()
 # Base Learning rate for optimizer
@@ -36,6 +39,7 @@ config.CAMERA_GENERATOR.BASE_LR = 0.0001
 config.CAMERA_GENERATOR.STEP_SIZE = 5
 config.CAMERA_GENERATOR.STEP_GAMMA = 0.1
 config.CAMERA_GENERATOR.PIXEL_LAMBDA = 0.2
+config.CAMERA_GENERATOR.NEW_LOSS_LAMBDA = 0.2
 
 config.CAMERA_DISCRIMINATOR = EasyDict()
 config.CAMERA_DISCRIMINATOR.BASE_LR = 0.0001
