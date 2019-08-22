@@ -10,8 +10,15 @@ from torchvision import transforms
 
 
 class LidarAndCameraDataset(Dataset):
-    def __init__(self, config):
+    def __init__(self, config ,transforms_=None):
         self.isPix2Pix = config.DATALOADER.PIX2PIX
+        self.transform = transforms.Compose(transforms_)
+        self.multip = np.ones((5,375,1242))
+        self.multip[0] = self.multip[0] * 0
+        self.multip[1] = self.multip[1] * 0.25
+        self.multip[2] = self.multip[2] * 0.5
+        self.multip[3] = self.multip[3] * 0.75
+        self.multip[4] = self.multip[4] * 1
         if self.isPix2Pix is True:
             self.segmented_path = config.DATALOADER.SEGMENTED_PATH
             self.rgb_path = config.DATALOADER.RGB_PATH
@@ -45,12 +52,18 @@ class LidarAndCameraDataset(Dataset):
     def __getitem__(self, idx):
         ##print(idx, self.lidar_dataset[idx])
         if self.isPix2Pix is True:
+
             try:
                 rgb_data = Image.open(self.rgb_dataset[idx])
-                rgb_data = transforms.ToTensor()(rgb_data)
+                rgb_data = self.transform(rgb_data)
+                #rgb_data = transforms.ToTensor()(rgb_data)
                 segmented_data = np.load(self.segmented_dataset[idx])["data"].reshape(5, 375, 1242)
+                segmented_data = segmented_data * self.multip
+                segmented_data = np.sum(segmented_data, axis=0).reshape(1,375,1242)
+
             except:
                 print("lel", idx, self.rgb_dataset[idx])
+
             return {"rgb_data": rgb_data, "segmented_data": segmented_data}
         else:
             try:

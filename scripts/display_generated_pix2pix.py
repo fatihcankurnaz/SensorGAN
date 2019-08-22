@@ -62,10 +62,10 @@ if __name__ == "__main__":
         print("Generating, ",number)
         generated_rgb_1 = Image.open(path + str(number) + "_generated_rgb_1.png")
         rgb1 = Image.open(path + str(number) + "_rgb_1.png")
-        segmented1 = np.load(path + str(number) + "_segmented_1.npz")["data"]
+        segmented1 = np.load("/home/fatih/Inputs/test/46segmented_0000000000.npz")["data"]
         generated_rgb_2 = Image.open(path + str(number) + "_generated_rgb_2.png")
         rgb2 = Image.open(path + str(number) + "_rgb_2.png")
-        segmented2 = np.load(path + str(number) + "_segmented_2.npz")["data"]
+        segmented2 = np.load("/home/fatih/Inputs/test/01segmented_0000000000.npz")["data"]
 
 
 
@@ -129,6 +129,8 @@ if __name__ == "__main__":
 
 
         if options.save is True:
-            plt.savefig(path+str(number)+".png")
+            plt.savefig(path+"grouped/"+str(number)+".png")
+            plt.close()
         else:
             plt.show()
+            plt.close()

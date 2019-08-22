@@ -33,7 +33,16 @@ parser = optparse.OptionParser()
 
 parser.add_option('-c', '--config', dest="config",
                   help="load this config file", metavar="FILE")
+patch = (1, 375 // 2 ** 4, 1242 // 2 ** 4)
 
+
+transforms_ = [
+    transforms.ToTensor(),
+    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+]
+def running_mean(x, N):
+    cumsum = np.cumsum(np.insert(x, 0, 0))
+    return (cumsum[N:] - cumsum[:-N]) / float(N)
 
 def train(dataloader, config, device):
     camera_gen_losses = []
@@ -50,8 +59,8 @@ def train(dataloader, config, device):
     criterion_pixel = nn.L1Loss(reduction=config.TRAIN.DISCRIMINATOR_CRITERION_REDUCTION)
 
 
-    camera_gen = Generator(5, 3, config.NUM_GPUS).to(device)
-    camera_disc = PixelDiscriminator(3, 5, config.NUM_GPUS).to(device)
+    camera_gen = Generator(1, 3, config.NUM_GPUS).to(device)
+    camera_disc = PixelDiscriminator(3, 1, config.NUM_GPUS).to(device)
 
 
     if (device.type == 'cuda') and (config.NUM_GPUS > 1):
@@ -76,24 +85,33 @@ def train(dataloader, config, device):
         "/SPACE/DATA/KITTI_Data/KITTI_raw_data/kitti/2011_09_26/2011_09_26_drive_0001_sync/image_02/data/0000000000.png"
     test_segmented_path2 = "/home/fatih/Inputs/test/01segmented_0000000000.npz"
 
+    multip = np.ones((5, 375, 1242))
+    multip[0] = multip[0] * 0
+    multip[2] = multip[2] * 2
+    multip[3] = multip[3] * 3
+    multip[4] = multip[4] * 4
+
     test_rgb1 = Image.open(test_rgb_path1)
     test_rgb1 = transforms.ToTensor()(test_rgb1)
     test_rgb1 = test_rgb1.to(device=device, dtype=torch.float)
     test_rgb1 = test_rgb1.view(1, 3, 375, 1242)
-    test_segmented1 = torch.from_numpy(np.load(test_segmented_path1)["data"].reshape(1, 5, 375, 1242)).to(device=device,
+    test_segmented1 = np.sum(np.load(test_segmented_path1)["data"].reshape(5, 375, 1242) * multip, axis=0)
+    test_segmented1 = torch.from_numpy(test_segmented1.reshape(1, 1, 375, 1242)).to(device=device,
                                                                                                     dtype=torch.float)
 
     test_rgb2 = Image.open(test_rgb_path2)
     test_rgb2 = transforms.ToTensor()(test_rgb2)
     test_rgb2 = test_rgb2.to(device=device, dtype=torch.float)
     test_rgb2 = test_rgb2.view(1, 3, 375, 1242)
-    test_segmented2 = torch.from_numpy(np.load(test_segmented_path2)["data"].reshape(1, 5, 375, 1242)).to(device=device,
-                                                                                                    dtype=torch.float)
-    # camera_gen_total_params = sum(p.numel() for p in camera_gen.parameters())
-    # print("Camera Generator ", camera_gen_total_params)
+    test_segmented2 = np.sum(np.load(test_segmented_path2)["data"].reshape(5, 375, 1242) * multip, axis=0)
 
-    # camera_disch_total_params = sum(p.numel() for p in camera_disc.parameters())
-    # print("Camera Discriminator ", camera_disch_total_params)
+    test_segmented2 = torch.from_numpy(test_segmented2.reshape(1, 1, 375, 1242)).to(device=device,
+                                                                                                    dtype=torch.float)
+    camera_gen_total_params = sum(p.numel() for p in camera_gen.parameters())
+    print("RGB Generator ", camera_gen_total_params)
+
+    camera_disc_total_params = sum(p.numel() for p in camera_disc.parameters())
+    print("RGB Discriminator ", camera_disc_total_params)
 
     example_camera_output = []
 
@@ -114,6 +132,7 @@ def train(dataloader, config, device):
                 continue
 
             label_real = Variable(torch.cuda.FloatTensor(np.ones((config.TRAIN.BATCH_SIZE, 1,23,77))), requires_grad=False)
+
             label_fake = Variable(torch.cuda.FloatTensor(np.zeros((config.TRAIN.BATCH_SIZE, 1,23,77))), requires_grad=False)
 
             #display_two_images(data["camera_data"][0], data["lidar_data"][0])
@@ -149,7 +168,7 @@ def train(dataloader, config, device):
             ################################################################################
             camera_disc.zero_grad()
             camera_disc_real_output = camera_disc(rgb_sample, segmented_sample)
-            camera_disc_real_loss = criterion_gan(camera_disc_real_output, label_real)
+            camera_disc_real_loss = criterion_gan(camera_disc_real_output, label_real-0.1)
 
             camera_disc_fake_output= camera_disc(generated_camera_sample.detach(), segmented_sample)
             camera_disc_fake_loss = criterion_gan(camera_disc_fake_output, label_fake)
@@ -170,7 +189,7 @@ def train(dataloader, config, device):
             camera_gen_losses.append(camera_gen_loss.item())
             camera_disc_losses.append(camera_disc_loss.item())
 
-            if epoch == 0  and current_batch == 0 :
+            if epoch != 0  and current_batch == 0 :
                 with torch.no_grad():
                     generated1 = camera_gen(test_segmented1.detach())
                     save_image(generated1,
@@ -200,15 +219,21 @@ def train(dataloader, config, device):
         camera_disc_scheduler.step()
 
 
-        plt.figure(figsize=(20, 14))
-        plt.title("GAN Losses  During Training")
-        plt.plot(camera_gen_losses, label="Generator Loss")
-        plt.plot(camera_disc_losses, label="Discriminator Loss")
-
-
+        fig = plt.figure(num=None, figsize=(25, 12), dpi=100, facecolor='w', edgecolor='k')
+        plt.subplot(1, 2, 1)
+        plt.title("Discriminator  Loss  Training")
+        plt.plot(running_mean(camera_disc_losses, 100), label="Discriminator Loss")
         plt.xlabel("iterations")
         plt.ylabel("Loss")
         plt.legend()
+
+        plt.subplot(1, 2, 2)
+        plt.title("Generator Loss Training")
+        plt.plot(running_mean(camera_gen_losses, 100), label="Generator Loss")
+        plt.xlabel("iterations")
+        plt.ylabel("Loss")
+        plt.legend()
+
         plt.savefig(config.TRAIN.GRAPH_SAVE_PATH+str(epoch))
         plt.close()
 
@@ -227,7 +252,7 @@ def main(opts):
 
     load_config(opts.config)
 
-    dataloader = lidar_camera_dataloader(config)
+    dataloader = lidar_camera_dataloader(config, transforms_)
     device = torch.device("cuda:0" if (torch.cuda.is_available() and config.NUM_GPUS > 0) else "cpu")
     train(dataloader,config, device)
 
