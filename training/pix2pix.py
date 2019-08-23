@@ -131,9 +131,11 @@ def train(dataloader, config, device):
             if len(dataloader) - current_batch< config.TRAIN.BATCH_SIZE:
                 continue
 
-            label_real = Variable(torch.cuda.FloatTensor(np.ones((config.TRAIN.BATCH_SIZE, 1,23,77))), requires_grad=False)
+            label_real = Variable(torch.cuda.FloatTensor(np.ones((config.TRAIN.BATCH_SIZE, 1,23,77))),
+                                  requires_grad=False)
 
-            label_fake = Variable(torch.cuda.FloatTensor(np.zeros((config.TRAIN.BATCH_SIZE, 1,23,77))), requires_grad=False)
+            label_fake = Variable(torch.cuda.FloatTensor(np.zeros((config.TRAIN.BATCH_SIZE, 1,23,77))),
+                                  requires_grad=False)
 
             #display_two_images(data["camera_data"][0], data["lidar_data"][0])
             segmented_sample = data["segmented_data"].to(device = device, dtype=torch.float)
