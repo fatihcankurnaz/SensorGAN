@@ -145,7 +145,7 @@ class Vis(object):
 
         if fileName:
         # save the figure
-            print(" saving result " + fileName)
+            #print(" saving result " + fileName)
             mlab.savefig(fileName)
             mlab.close()
         #else:

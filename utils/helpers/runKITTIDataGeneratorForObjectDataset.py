@@ -107,10 +107,10 @@ def processData(cloudName, bb3D_path, PC2ImgConv, outputFileName):
 
     # generate bird eye view image and cloud
     bevImage, bevCloud = PC2ImgConv.getBirdEyeViewImage(labeledPC, segValColIndex=5)
-    print(" bevImage size  " + str(bevImage.shape))
+    #print(" bevImage size  " + str(bevImage.shape))
 
     timeElapsed = time.time() - timeStart
-    print(" bevImage generation took  " + str(timeElapsed))
+    #print(" bevImage generation took  " + str(timeElapsed))
 
     if True:
         visualizer = Vis()
@@ -119,7 +119,7 @@ def processData(cloudName, bb3D_path, PC2ImgConv, outputFileName):
 
         if bb3D is not None:
             # decompose cloud into object clouds
-            backgrdCloud, roadCloud, vehCloud, pedCloud, cycCloud = decomposeCloud(colorizedPC, verbose=True)
+            backgrdCloud, roadCloud, vehCloud, pedCloud, cycCloud = decomposeCloud(colorizedPC, verbose=False)
 
             visualizer.showCloudsWithBBs(orgPC=backgrdCloud, fovPC=bevCloud,  roadPC=roadCloud,
                                          vehPC=vehCloud, pedPC=pedCloud, cycPC=cycCloud, bb3D=[],
