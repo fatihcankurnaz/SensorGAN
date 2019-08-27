@@ -10,8 +10,8 @@ from torchvision import transforms
 
 
 class LidarAndCameraDataset(Dataset):
-    def __init__(self, config ,transforms_=None, transform_seg=None):
-        self.isPix2Pix = config.DATALOADER.PIX2PIX
+    def __init__(self, config, transforms_=None, transform_seg=None):
+        self.model = config.MODEL
         self.transform = transforms.Compose(transforms_)
         self.transform_seg = transforms.Compose(transform_seg)
         self.multip = np.ones((5,375,1242))
@@ -20,7 +20,7 @@ class LidarAndCameraDataset(Dataset):
         self.multip[2] = self.multip[2] * 2
         self.multip[3] = self.multip[3] * 3
         self.multip[4] = self.multip[4] * 4
-        if self.isPix2Pix is True:
+        if self.model == "pix2pix":
             self.segmented_path = config.DATALOADER.SEGMENTED_PATH
             self.rgb_path = config.DATALOADER.RGB_PATH
             self.dirs = [dirs for dirs in listdir(self.segmented_path)]
@@ -31,6 +31,21 @@ class LidarAndCameraDataset(Dataset):
                     current_segmented_dir = join(self.segmented_path, dirs)
                     current_rgb_dir = join(self.rgb_path,dirs+"/image_02/data")
                     current_rgb = join(current_rgb_dir, file.split(".")[0].split("segmented_")[1] + ".png")
+                    if current_rgb != "/SPACE/DATA/KITTI_Data/KITTI_raw_data/kitti/2011_09_26/2011_09_26_drive_0056_sync/image_02/data/0000000102.png":
+                        self.segmented_dataset.append(join(current_segmented_dir, file))
+                        self.rgb_dataset.append(current_rgb)
+
+        elif self.model == "baseline":
+            self.segmented_path = config.DATALOADER.SEGMENTED_PATH
+            self.rgb_path = config.DATALOADER.RGB_PATH
+            self.dirs = [dirs for dirs in listdir(self.segmented_path)]
+            self.rgb_dataset = []
+            self.segmented_dataset = []
+            for dirs in self.dirs:
+                for file in sorted(listdir(join(self.segmented_path, dirs))):
+                    current_segmented_dir = join(self.segmented_path, dirs)
+                    current_rgb_dir = join(self.rgb_path,dirs+"/image_02/data")
+                    current_rgb = join(current_rgb_dir, file.split(".")[0].split("cameraView_")[1] + ".png")
                     if current_rgb != "/SPACE/DATA/KITTI_Data/KITTI_raw_data/kitti/2011_09_26/2011_09_26_drive_0056_sync/image_02/data/0000000102.png":
                         self.segmented_dataset.append(join(current_segmented_dir, file))
                         self.rgb_dataset.append(current_rgb)
@@ -52,7 +67,7 @@ class LidarAndCameraDataset(Dataset):
 
     def __getitem__(self, idx):
         ##print(idx, self.lidar_dataset[idx])
-        if self.isPix2Pix is True:
+        if self.model == "pix2pix":
 
             try:
                 rgb_data = Image.open(self.rgb_dataset[idx])
@@ -60,6 +75,22 @@ class LidarAndCameraDataset(Dataset):
                 #rgb_data = transforms.ToTensor()(rgb_data)
                 segmented_data = np.load(self.segmented_dataset[idx])["data"].reshape(5, 375, 1242)
                 segmented_data = segmented_data * self.multip
+                segmented_data = np.sum(segmented_data, axis=0).reshape(375,1242)
+                segmented_data = Image.fromarray(segmented_data, 'L')
+                segmented_data = self.transform_seg(segmented_data)
+
+            except:
+                print("lel", idx, self.rgb_dataset[idx])
+
+            return {"rgb_data": rgb_data, "segmented_data": segmented_data}
+
+        elif self.model == "baseline":
+
+            try:
+                rgb_data = Image.open(self.rgb_dataset[idx])
+                rgb_data = self.transform(rgb_data)
+                #rgb_data = transforms.ToTensor()(rgb_data)
+                segmented_data = np.load(self.segmented_dataset[idx])["data"].reshape(5, 375, 1242)
                 segmented_data = np.sum(segmented_data, axis=0).reshape(375,1242)
                 segmented_data = Image.fromarray(segmented_data, 'L')
                 segmented_data = self.transform_seg(segmented_data)
@@ -81,7 +112,7 @@ class LidarAndCameraDataset(Dataset):
 
 
     def __len__(self):
-        if self.isPix2Pix is True:
+        if self.model == "pix2pix" or self.model == "baseline":
             return len(self.segmented_dataset)
         else:
             return len(self.lidar_dataset)

@@ -11,6 +11,7 @@ from easydict import EasyDict
 config = EasyDict()
 config.NUM_GPUS = 1
 config.OUTPUT_DIR= ""
+config.MODEL= "baseline"
 
 config.DATALOADER = EasyDict()
 config.DATALOADER.WORKERS = 2

@@ -1,11 +1,11 @@
 NUM_GPUS: 2
-MODEL: "pix2pix"
+MODEL: "baseline"
 DATALOADER:
   WORKERS: 4
   SHUFFLE: True
   PIX2PIX: True
   RGB_PATH: "/SPACE/DATA/KITTI_Data/KITTI_raw_data/kitti/2011_09_26"
-  SEGMENTED_PATH: "/home/fatih/Inputs/CameraData"
+  SEGMENTED_PATH: "/home/fatih/Inputs/LidarData"
 CAMERA_GENERATOR:
   BASE_LR: 0.0002
   STEP_SIZE: 100
@@ -23,10 +23,10 @@ TRAIN:
   SAVE_AT: 5
   START_EPOCH: 0
   MAX_EPOCH: 100
-  LOAD_WEIGHTS: "/home/fatih/my_git/sensorgan/outputs/pipx_yedk/normalized_0.9true_input1d_nonnormal_55"
-  SAVE_WEIGHTS: "/home/fatih/my_git/sensorgan/outputs/pix2pix_saved_models/"
+  LOAD_WEIGHTS: ""
+  SAVE_WEIGHTS: "/home/fatih/my_git/sensorgan/outputs/baseline_models/"
   DISCRIMINATOR_CRITERION_REDUCTION: "mean"
   CYCLE_LOSS_REDUCTION: "mean"
-  EXAMPLE_SAVE_PATH: "/home/fatih/my_git/sensorgan/outputs/pix2pix_examples/"
-  GRAPH_SAVE_PATH: "/home/fatih/my_git/sensorgan/outputs/pix2pix_graphs/"
+  EXAMPLE_SAVE_PATH: "/home/fatih/my_git/sensorgan/outputs/baseline_examples/"
+  GRAPH_SAVE_PATH: "/home/fatih/my_git/sensorgan/outputs/baseline_graphs/"
 OUTPUT_DIR: ""
