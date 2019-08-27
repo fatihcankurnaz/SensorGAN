@@ -26,8 +26,8 @@ parser.add_option('-v', '--verbose', dest="verbose", action="store_true", defaul
 
 def turn_back_to_oneD(data, options):
     # applies argmax
-    torch_version = torch.from_numpy(data).view(1, 5, -1, 1242)
-    new_version = torch.max(torch_version, dim=1)[1].view(-1,1242)
+    torch_version = torch.from_numpy(data).view(1, 5, -1, 414)
+    new_version = torch.max(torch_version, dim=1)[1].view(-1,414)
     maxes = torch.max(torch_version, dim=1)[1].view(-1)
     count = 0
     # counts number of valid class points

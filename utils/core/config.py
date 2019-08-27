@@ -67,7 +67,11 @@ def fix_the_type(desired_type, given_type):
     if type(desired_type) == type(given_type):
         return given_type
     elif isinstance(desired_type, bool):
-        return bool(given_type)
+        if(given_type == True):
+            return True
+        else:
+            return False
+
     elif isinstance(desired_type, int):
         return int(given_type)
     elif isinstance(desired_type, float):

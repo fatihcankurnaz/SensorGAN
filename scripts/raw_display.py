@@ -28,11 +28,11 @@ sys.path.insert(0, '/home/fatih/other_git/PSPNet-tensorflow')
 from model import PSPNet101, PSPNet50
 from tools import *
 
-image_root_path = "/SPACE/kan/Data/KITTI_raw_data/kitti/2011_09_26"
-trans_root_path = "/SPACE/kan/Data/KITTI_labeledPC_with_BBs/TransformationMatrix"
-bbs2d_root_path = "/SPACE/kan/Data/KITTI_labeledPC_with_BBs/BBs_2d/2011_09_26"
-bbs3d_root_path = "/SPACE/kan/Data/KITTI_labeledPC_with_BBs/BBs_3d/2011_09_26"
-label_root_path = "/SPACE/kan/Data/KITTI_labeledPC_with_BBs/2011_09_26"
+image_root_path = "/SPACE/DATA/KITTI_Data/KITTI_raw_data/kitti/2011_09_26"
+trans_root_path = "/SPACE/DATA/KITTI_Data/KITTI_labeledPC_with_BBs/TransformationMatrix"
+bbs2d_root_path = "/SPACE/DATA/KITTI_Data/KITTI_labeledPC_with_BBs/BBs_2d/2011_09_26"
+bbs3d_root_path = "/SPACE/DATA/KITTI_Data/KITTI_labeledPC_with_BBs/BBs_3d/2011_09_26"
+label_root_path = "/SPACE/DATA/KITTI_Data/KITTI_labeledPC_with_BBs/2011_09_26"
 
 
 
@@ -256,20 +256,20 @@ def main():
         vis_fov_img = 'image_velo_from3d.png'
     else:
         image_velo_3dbox = GT_3d_image(velo_on_image, boundingbox_2d)
-        vis_fov_img = './output/image_velo_from2d.png'
+        vis_fov_img = '/home/fatih/my_git/sensorgan/scripts/output/image_velo_from2d.png'
 
         cv2.imwrite(vis_fov_img, image_velo_3dbox)
 
     PC2ImgConv = PC2ImageConverter.PC2ImgConverter(imgChannel=5, xRange=[0, 50], yRange=[-6, 12], zRange=[-10, 8],
                                                    xGridSize=0.2, yGridSize=0.3, zGridSize=0.3, maxImgHeight=64,
                                                    maxImgWidth=256, maxImgDepth=64)
-    outputFileName = "./output/Cloud.png"
+    outputFileName = "/home/fatih/my_git/sensorgan/scripts/output/Cloud"
     myPsp = PspInference(left_image_path)
     processData(_labeled_velo, _Boundingbox_3d, PC2ImgConv, outputFileName)
 
     left_image = mpimg.imread(left_image_path)
     right_image = myPsp.infer()
-    bird_eye_image = mpimg.imread(outputFileName)
+    bird_eye_image = np.load(outputFileName+".npz")["data"]
     overlayed_image = mpimg.imread(vis_fov_img)
     fig = plt.figure(num=None, figsize=(25, 12), dpi=100, facecolor='w', edgecolor='k')
     # left=None, bottom=None, right=None, top=None,
@@ -291,7 +291,7 @@ def main():
     plt.axis("off")
     plt.title("LABELED")
     plt.tight_layout()
-    plt.savefig("./output/result.png")
+    plt.savefig("/home/fatih/my_git/sensorgan/scripts/output/result.png")
     plt.close()
 
 

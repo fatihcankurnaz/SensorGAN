@@ -3,11 +3,11 @@ import time
 
 import numpy as np
 import pickle
-import PC2ImageConverter
+import utils.helpers.PC2ImageConverter as PC2ImageConverter
 import matplotlib.pyplot as plt
 
 
-from visualizer import Vis
+from utils.helpers.visualizer import Vis
 
 def decomposeCloud(rawCloud, verbose=False):
     # decompose cloud

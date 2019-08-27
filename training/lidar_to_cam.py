@@ -31,6 +31,10 @@ parser = optparse.OptionParser()
 parser.add_option('-c', '--config', dest="config",
                   help="load this config file", metavar="FILE")
 
+def running_mean(x, N):
+    cumsum = np.cumsum(np.insert(x, 0, 0))
+    return (cumsum[N:] - cumsum[:-N]) / float(N)
+
 
 def train(dataloader, config, device):
     camera_gen_losses = []
@@ -48,7 +52,7 @@ def train(dataloader, config, device):
 
 
     camera_gen = Generator(5, 5, config.NUM_GPUS).to(device)
-    camera_disc = PixelDiscriminator(5, config.NUM_GPUS).to(device)
+    camera_disc = PixelDiscriminator(5, 5, config.NUM_GPUS).to(device)
 
 
     if (device.type == 'cuda') and (config.NUM_GPUS > 1):
@@ -173,23 +177,7 @@ def train(dataloader, config, device):
             camera_gen_losses.append(camera_gen_loss.item())
             camera_disc_losses.append(camera_disc_loss.item())
 
-            if epoch != 0  and current_batch == 0 :
-                with torch.no_grad():
-                    fakeCamera1 = camera_gen(test_lidar1.detach())
-                    np.savez_compressed(config.TRAIN.EXAMPLE_SAVE_PATH + str(epoch) + "_generated_camera_1",
-                                        data=fakeCamera1[-1].cpu().numpy())
-                    np.savez_compressed(config.TRAIN.EXAMPLE_SAVE_PATH + str(epoch) + "_lidar_1",
-                                        data=test_lidar1[-1].cpu().numpy())
-                    np.savez_compressed(config.TRAIN.EXAMPLE_SAVE_PATH + str(epoch) + "_camera_1",
-                                        data=test_camera1[-1].cpu().numpy())
-                    fakeCamera2 = camera_gen(test_lidar2.detach())
 
-                    np.savez_compressed(config.TRAIN.EXAMPLE_SAVE_PATH + str(epoch) + "_generated_camera_2",
-                                        data=fakeCamera2[-1].cpu().numpy())
-                    np.savez_compressed(config.TRAIN.EXAMPLE_SAVE_PATH + str(epoch) + "_lidar_2",
-                                        data=test_lidar2[-1].cpu().numpy())
-                    np.savez_compressed(config.TRAIN.EXAMPLE_SAVE_PATH + str(epoch) + "_camera_2",
-                                        data=test_camera2[-1].cpu().numpy())
 
             del generated_camera_sample
             del camera_sample, lidar_sample
@@ -199,16 +187,22 @@ def train(dataloader, config, device):
         camera_gen_scheduler.step()
         camera_disc_scheduler.step()
 
-
-        plt.figure(figsize=(20, 14))
-        plt.title("GAN Losses  During Training")
-        plt.plot(camera_gen_losses, label="Generator Loss")
-        plt.plot(camera_disc_losses, label="Discriminator Loss")
-
-
+        fig = plt.figure(num=None, figsize=(25, 12), dpi=100, facecolor='w', edgecolor='k')
+        plt.subplot(1, 2, 1)
+        plt.title("Discriminator  Loss  Training")
+        plt.plot(running_mean(camera_disc_losses, 100), label="Discriminator Loss")
         plt.xlabel("iterations")
         plt.ylabel("Loss")
         plt.legend()
+
+        plt.subplot(1, 2, 2)
+        plt.title("Generator Loss Training")
+        plt.plot(running_mean(camera_gen_losses, 100), label="Generator Loss")
+        plt.xlabel("iterations")
+        plt.ylabel("Loss")
+        plt.legend()
+
+
         plt.savefig(config.TRAIN.GRAPH_SAVE_PATH+str(epoch))
         plt.close()
 
@@ -216,6 +210,25 @@ def train(dataloader, config, device):
 
     #save_model(config, lidar_gen, camera_gen , lidar_disc , camera_disc, optimizer_lidar_gen,
     #           optimizer_camera_gen, optimizer_lidar_disc, optimizer_camera_disc )
+
+        if epoch != 0:
+            with torch.no_grad():
+                fakeCamera1 = camera_gen(test_lidar1.detach())
+                np.savez_compressed(config.TRAIN.EXAMPLE_SAVE_PATH + str(epoch) + "_generated_camera_1",
+                                    data=fakeCamera1[-1].cpu().numpy())
+                np.savez_compressed(config.TRAIN.EXAMPLE_SAVE_PATH + str(epoch) + "_lidar_1",
+                                    data=test_lidar1[-1].cpu().numpy())
+                np.savez_compressed(config.TRAIN.EXAMPLE_SAVE_PATH + str(epoch) + "_camera_1",
+                                    data=test_camera1[-1].cpu().numpy())
+                fakeCamera2 = camera_gen(test_lidar2.detach())
+
+                np.savez_compressed(config.TRAIN.EXAMPLE_SAVE_PATH + str(epoch) + "_generated_camera_2",
+                                    data=fakeCamera2[-1].cpu().numpy())
+                np.savez_compressed(config.TRAIN.EXAMPLE_SAVE_PATH + str(epoch) + "_lidar_2",
+                                    data=test_lidar2[-1].cpu().numpy())
+                np.savez_compressed(config.TRAIN.EXAMPLE_SAVE_PATH + str(epoch) + "_camera_2",
+                                    data=test_camera2[-1].cpu().numpy())
+
         if epoch != 0 and epoch% config.TRAIN.SAVE_AT == 0 :
             print("Saving Model at ", epoch)
             save_vanilla_model(config, camera_gen, camera_disc,  optimizer_camera_gen, optimizer_camera_disc, epoch)

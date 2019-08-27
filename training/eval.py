@@ -29,7 +29,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy import misc
 from skimage import color
-
+from utils.helpers.runKITTIDataGeneratorForObjectDataset import processData
+import utils.helpers.PC2ImageConverter as PC2ImageConverter
+from utils.helpers.visualizer import  Vis
 torch.manual_seed(0)
 parser = optparse.OptionParser()
 colors = ['black', 'green', 'yellow', 'red', 'blue']
@@ -45,18 +47,34 @@ def turn_back_to_oneD(data):
 
 
 def eval(config, device):
+    PC2ImgConv = PC2ImageConverter.PC2ImgConverter(imgChannel=5, xRange=[0, 25], yRange=[-6, 12], zRange=[-10, 8],
+                                                   xGridSize=0.1, yGridSize=0.15, zGridSize=0.3, maxImgHeight=128,
+                                                   maxImgWidth=256, maxImgDepth=64)
 
 
+    cloud_path = "/SPACE/DATA/KITTI_Data/KITTI_labeledPC_with_BBs/2011_09_26/2011_09_26_drive_0046_sync/full_label_2011_09_26_0046_0000000000.npy"
 
-    camera_gen = Generator(1, 3, config.NUM_GPUS).to(device)
+    processData(cloud_path, "", PC2ImgConv, "/home/fatih/my_git/sensorgan/outputs/eval_result/cloud.png")
+
+    real_lidar_seg_path = "/home/fatih/Inputs/test/46cameraView_0000000000.npz"
+    real_camera_seg_path = "/home/fatih/Inputs/test/46segmented_0000000000.npz"
+    real_camera_seg = turn_back_to_oneD(np.load(real_camera_seg_path)["data"])
+    real_lidar_seg = turn_back_to_oneD(np.load(real_lidar_seg_path)["data"])
+
+    cloud = Image.open("/home/fatih/my_git/sensorgan/outputs/eval_result/cloud.png")
+    cloud = cloud.crop((0, 300, 1400, 800))
+    print(cloud)
+    print(cloud.size)
+
+    real_image_gen = Generator(1, 3, config.NUM_GPUS).to(device)
 
     if (device.type == 'cuda') and (config.NUM_GPUS > 1):
-        camera_gen = nn.DataParallel(camera_gen, list(range(config.NUM_GPUS)))
+        camera_gen = nn.DataParallel(real_image_gen, list(range(config.NUM_GPUS)))
 
     print("loading previous model")
     checkpoint = torch.load(config.TRAIN.LOAD_WEIGHTS)
-    camera_gen.load_state_dict(checkpoint['sensor1_gen'])
-    camera_gen.eval()
+    real_image_gen.load_state_dict(checkpoint['sensor1_gen'])
+    real_image_gen.eval()
     print("done")
 
 
@@ -66,7 +84,7 @@ def eval(config, device):
     for i in range(1, 100):
 
         test_segmented_path1 = "/home/fatih/my_git/sensorgan/outputs/examples/"+str(i)+"_generated_camera_1.npz"
-        test_segmented_path2 = "/home/fatih/my_git/sensorgan/outputs/examples/"+str(i)+"_generated_camera_2.npz"
+
 
 
 
@@ -75,51 +93,51 @@ def eval(config, device):
 
         test_segmented1 = torch.from_numpy(test1).to(device=device, dtype=torch.float).view(1,1,375,1242)
 
+        output1 = real_image_gen(test_segmented1)
 
-        test_segmented2np = np.load(test_segmented_path2)["data"].reshape(5, 375, 1242)
-        test2 = turn_back_to_oneD(test_segmented2np)
-        test_segmented2 = torch.from_numpy(test2).to(device=device, dtype=torch.float).view(1,1,375,1242)
-
-
-
-
-
-
-
-        output1 = camera_gen(test_segmented1)
-        output2 = camera_gen(test_segmented2)
 
         output1 = output1.detach().cpu()
-        output2 = output2.detach().cpu()
+
         save_image(output1, "/home/fatih/my_git/sensorgan/outputs/eval_result/output1.png", normalize=True)
-        save_image(output2, "/home/fatih/my_git/sensorgan/outputs/eval_result/output2.png", normalize=True)
+
+        real_image = Image.open("/SPACE/DATA/KITTI_Data/KITTI_raw_data/kitti/2011_09_26/2011_09_26_drive_0046_sync/image_02/data/0000000000.png")
 
         output1 = Image.open("/home/fatih/my_git/sensorgan/outputs/eval_result/output1.png")
-        output2 = Image.open("/home/fatih/my_git/sensorgan/outputs/eval_result/output2.png")
+
         fig = plt.figure(num=None, figsize=(25, 12), dpi=100, facecolor='w', edgecolor='k')
         fig.subplots_adjust(hspace=0.1, wspace=0.1)
 
-        plt.subplot(2, 2, 1)
-        plt.title("Segmented 1")
+        plt.subplot(3, 2, 1)
+        plt.title("Given Lidar",fontdict={'fontsize': 15 })
+        plt.imshow(cloud)
+        plt.axis("off")
+
+        plt.subplot(3, 2, 2)
+        plt.title("Lidar Segmentation",fontdict={'fontsize': 15 })
+        plt.imshow(color.label2rgb(real_lidar_seg, colors=colors))
+        plt.axis("off")
+
+        plt.subplot(3, 2, 3)
+        plt.title("Expected Segmentation",fontdict={'fontsize': 15 })
+        plt.imshow(color.label2rgb(real_camera_seg, colors=colors))
+        plt.axis("off")
+
+        plt.subplot(3, 2, 4)
+        plt.title("Expected RGB",fontdict={'fontsize': 15 })
+        plt.imshow(real_image)
+        plt.axis("off")
+
+        plt.subplot(3, 2, 5)
+        plt.title("Generated Segmentation",fontdict={'fontsize': 15 })
         plt.imshow(color.label2rgb(turn_back_to_oneD(test_segmented1np),
                                    colors=colors))
         plt.axis("off")
 
-        plt.subplot(2, 2, 2)
-        plt.title("Segmented 2")
-        plt.imshow(color.label2rgb(turn_back_to_oneD(test_segmented2np),
-                                   colors=colors))
-        plt.axis("off")
-
-        plt.subplot(2, 2, 3)
-        plt.title("RGB 1")
+        plt.subplot(3, 2, 6)
+        plt.title("Generated RGB",fontdict={'fontsize': 15 })
         plt.imshow(output1)
         plt.axis("off")
 
-        plt.subplot(2, 2, 4)
-        plt.title("RGB 2")
-        plt.imshow(output2)
-        plt.axis("off")
         plt.savefig("/home/fatih/my_git/sensorgan/outputs/eval_result/"+str(i)+"eval.png")
 
         plt.close()

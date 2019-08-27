@@ -210,14 +210,14 @@ def main():
         vis_fov_img = 'image_velo_from3d.png'
     else:
         image_velo_3dbox = GT_3d_image(velo_on_image, boundingbox_2d)
-        vis_fov_img = './output/image_velo_from2d.png'
+        vis_fov_img = '/home/fatih/my_git/sensorgan/scripts/output/image_velo_from2d.png'
 
         cv2.imwrite(vis_fov_img, image_velo_3dbox)
 
     PC2ImgConv = PC2ImageConverter.PC2ImgConverter(imgChannel=5, xRange=[5.7, 50], yRange=[-6, 16], zRange=[-10, 8],
                                                    xGridSize=0.1, yGridSize=0.3, zGridSize=0.3, maxImgHeight=128,
                                                    maxImgWidth=512, maxImgDepth=64)
-    outputFileName = "./output/Cloud_view"
+    outputFileName = "/home/fatih/my_git/sensorgan/scripts/output/Cloud_view"
     processData(_labeled_velo, _Boundingbox_3d, PC2ImgConv, outputFileName)
 
     left_image = mpimg.imread(left_image_path)
