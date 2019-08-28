@@ -42,7 +42,6 @@ transforms_ = [
 ]
 transforms_seg = [
     transforms.ToTensor(),
-    transforms.Normalize((0.5,), (0.5,)),
 ]
 def running_mean(x, N):
     cumsum = np.cumsum(np.insert(x, 0, 0))

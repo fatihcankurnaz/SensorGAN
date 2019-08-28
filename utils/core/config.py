@@ -67,6 +67,7 @@ config.TRAIN.CYCLE_LAMBDA = 10
 config.TEST = EasyDict()
 config.TEST.LOAD_LIDAR_TO_CAM_WEIGHTS = "/home/fatih/my_git/sensorgan/outputs/saved_models/4.pth"
 config.TEST.LOAD_PIX2PIX_WEIGHTS = "/home/fatih/my_git/sensorgan/outputs/pipx_yedk/normalized_0.9true_input1d_nonnormal_55"
+config.TEST.LOAD_BASELINE_WEIGHTS = "/home/fatih/my_git/sensorgan/outputs/baseline_models/40.pth"
 
 def fix_the_type(desired_type, given_type):
     if type(desired_type) == type(given_type):

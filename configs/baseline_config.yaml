@@ -1,5 +1,7 @@
 NUM_GPUS: 2
 MODEL: "baseline"
+TEST:
+  LOAD_BASELINE_WEIGHTS: "/home/fatih/my_git/sensorgan/outputs/baseline_models/4.pth"
 DATALOADER:
   WORKERS: 4
   SHUFFLE: True
@@ -20,7 +22,7 @@ TRAIN:
   BETA2: 0.999
   LAMBDA_GP: 10
   BATCH_SIZE: 8
-  SAVE_AT: 5
+  SAVE_AT: 1
   START_EPOCH: 0
   MAX_EPOCH: 100
   LOAD_WEIGHTS: ""

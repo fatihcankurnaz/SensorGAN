@@ -62,7 +62,7 @@ def train(dataloader, config, device):
     criterion_pixel = nn.L1Loss(reduction=config.TRAIN.DISCRIMINATOR_CRITERION_REDUCTION)
 
 
-    camera_gen = GeneratorAlternative(1, 3, config.NUM_GPUS).to(device)
+    camera_gen = Generator(1, 3, config.NUM_GPUS).to(device)
     camera_disc = PixelDiscriminator(3, 1, config.NUM_GPUS).to(device)
 
 
@@ -82,38 +82,41 @@ def train(dataloader, config, device):
                                                       gamma=config.CAMERA_DISCRIMINATOR.STEP_GAMMA)
     test_rgb_path1 = \
         "/SPACE/DATA/KITTI_Data/KITTI_raw_data/kitti/2011_09_26/2011_09_26_drive_0046_sync/image_02/data/0000000000.png"
-    test_segmented_path1 = "/home/fatih/Inputs/test/46segmented_0000000000.npz"
+    test_segmented_path1 = "/home/fatih/Inputs/test/46cameraView_0000000000.npz"
 
     test_rgb_path2 = \
         "/SPACE/DATA/KITTI_Data/KITTI_raw_data/kitti/2011_09_26/2011_09_26_drive_0001_sync/image_02/data/0000000000.png"
-    test_segmented_path2 = "/home/fatih/Inputs/test/01segmented_0000000000.npz"
+    test_segmented_path2 = "/home/fatih/Inputs/test/01cameraView_0000000000.npz"
 
     multip = np.ones((5, 375, 1242))
     multip[0] = multip[0] * 0
-    multip[2] = multip[2] * 2
-    multip[3] = multip[3] * 3
-    multip[4] = multip[4] * 4
+    multip[2] = multip[2] * 1
+    multip[3] = multip[3] * 1
+    multip[4] = multip[4] * 1
     im_transform = transforms.Compose(transforms_)
     seg_transform = transforms.Compose(transforms_seg)
     test_rgb1 = Image.open(test_rgb_path1)
+    test_rgb2 = Image.open(test_rgb_path2)
     test_rgb1 = im_transform(test_rgb1)
+    test_rgb2 = im_transform(test_rgb2)
     #test_rgb1 = transforms.ToTensor()(test_rgb1)
     test_rgb1 = test_rgb1.to(device=device, dtype=torch.float)
     test_rgb1 = test_rgb1.view(1, 3, 375, 1242)
-
-    test_segmented1 = np.sum(np.load(test_segmented_path1)["data"].reshape(5, 375, 1242) * multip, axis=0).reshape(375,1242)
-    test_segmented1 = Image.fromarray(test_segmented1, 'L')
-    test_segmented1 = seg_transform(test_segmented1).view(1, 1, 375, 1242).to(device=device,
-                                                                                                    dtype=torch.float)
-
-    test_rgb2 = Image.open(test_rgb_path2)
-    test_rgb2 = transforms.ToTensor()(test_rgb2)
     test_rgb2 = test_rgb2.to(device=device, dtype=torch.float)
     test_rgb2 = test_rgb2.view(1, 3, 375, 1242)
-    test_segmented2 = np.sum(np.load(test_segmented_path2)["data"].reshape(5, 375, 1242) * multip, axis=0)
 
-    test_segmented2 = torch.from_numpy(test_segmented2.reshape(1, 1, 375, 1242)).to(device=device,
-                                                                                                    dtype=torch.float)
+    test_segmented1 = np.sum(np.load(test_segmented_path1)["data"].reshape(5, 375, 1242) * multip, axis=0).reshape(375,1242)
+
+    #test_segmented1 = Image.fromarray(test_segmented1, 'L')
+    #test_segmented1 = seg_transform(test_segmented1).view(1, 1, 375, 1242).to(device=device,
+    #                                                                                                dtype=torch.float)
+    test_segmented2 = np.sum(np.load(test_segmented_path2)["data"].reshape(5, 375, 1242) * multip, axis=0).reshape(375,
+                                                                                                                   1242)
+    #test_segmented2 = Image.fromarray(test_segmented2, 'L')
+    #test_segmented2 = seg_transform(test_segmented2).view(1, 1, 375, 1242).to(device=device,
+    #                                                                          dtype=torch.float)
+
+
     camera_gen_total_params = sum(p.numel() for p in camera_gen.parameters())
     print("RGB Generator ", camera_gen_total_params)
 
@@ -147,7 +150,9 @@ def train(dataloader, config, device):
             #display_two_images(data["camera_data"][0], data["lidar_data"][0])
             segmented_sample = data["segmented_data"].to(device = device, dtype=torch.float)
             rgb_sample = data["rgb_data"].to(device = device, dtype=torch.float)
-
+            # plt.imshow(segmented_sample[0][0].detach().cpu().numpy())
+            # plt.show()
+            # plt.close()
             ################################################################################
             #                               Zero Gradients
             ################################################################################
@@ -198,30 +203,7 @@ def train(dataloader, config, device):
             camera_gen_losses.append(camera_gen_loss.item())
             camera_disc_losses.append(camera_disc_loss.item())
 
-            if epoch != 0  and current_batch == 0 :
-                with torch.no_grad():
-                    generated1 = camera_gen(test_segmented1.detach())
-                    save_image(generated1,
-                               filename=config.TRAIN.EXAMPLE_SAVE_PATH + str(epoch) + "_generated_rgb_1.png",
-                               normalize=True)
-                    # save_image(test_segmented1,
-                    #            filename= config.TRAIN.EXAMPLE_SAVE_PATH + str(epoch) + "_segmented_1.png",
-                    #            normalize=True)
-                    np.savez_compressed(config.TRAIN.EXAMPLE_SAVE_PATH + str(epoch) + "_segmented_1",
-                                        data=test_segmented1[-1].cpu().numpy())
-                    save_image(test_rgb1,
-                               filename=config.TRAIN.EXAMPLE_SAVE_PATH + "{0}_rgb_1.png".format(epoch),
-                               normalize=True)
-                    generated2 = camera_gen(test_segmented2.detach())
 
-                    save_image(generated2,
-                               filename=config.TRAIN.EXAMPLE_SAVE_PATH + str(epoch) + "_generated_rgb_2.png",
-                               normalize=True)
-                    np.savez_compressed(config.TRAIN.EXAMPLE_SAVE_PATH + str(epoch) + "_segmented_2",
-                                        data=test_segmented2[-1].cpu().numpy())
-                    save_image(test_rgb2,
-                               filename=config.TRAIN.EXAMPLE_SAVE_PATH + str(epoch) + "_rgb_2.png",
-                               normalize=True)
 
             del generated_camera_sample
             del segmented_sample, rgb_sample
@@ -229,6 +211,8 @@ def train(dataloader, config, device):
 
         camera_gen_scheduler.step()
         camera_disc_scheduler.step()
+
+
 
 
         fig = plt.figure(num=None, figsize=(25, 12), dpi=100, facecolor='w', edgecolor='k')
@@ -253,6 +237,32 @@ def train(dataloader, config, device):
 
     #save_model(config, lidar_gen, camera_gen , lidar_disc , camera_disc, optimizer_lidar_gen,
     #           optimizer_camera_gen, optimizer_lidar_disc, optimizer_camera_disc )
+
+        if epoch != 0:
+            with torch.no_grad():
+                generated1 = camera_gen(test_segmented1.detach())
+                save_image(generated1,
+                           filename=config.TRAIN.EXAMPLE_SAVE_PATH + str(epoch) + "_generated_rgb_1.png",
+                           normalize=True)
+                # save_image(test_segmented1,
+                #            filename= config.TRAIN.EXAMPLE_SAVE_PATH + str(epoch) + "_segmented_1.png",
+                #            normalize=True)
+                np.savez_compressed(config.TRAIN.EXAMPLE_SAVE_PATH + str(epoch) + "_segmented_1",
+                                    data=test_segmented1[-1].cpu().numpy())
+                save_image(test_rgb1,
+                           filename=config.TRAIN.EXAMPLE_SAVE_PATH + "{0}_rgb_1.png".format(epoch),
+                           normalize=True)
+                generated2 = camera_gen(test_segmented2.detach())
+
+                save_image(generated2,
+                           filename=config.TRAIN.EXAMPLE_SAVE_PATH + str(epoch) + "_generated_rgb_2.png",
+                           normalize=True)
+                np.savez_compressed(config.TRAIN.EXAMPLE_SAVE_PATH + str(epoch) + "_segmented_2",
+                                    data=test_segmented2[-1].cpu().numpy())
+                save_image(test_rgb2,
+                           filename=config.TRAIN.EXAMPLE_SAVE_PATH + str(epoch) + "_rgb_2.png",
+                           normalize=True)
+
         if epoch != 0 and epoch% config.TRAIN.SAVE_AT == 0 :
             print("Saving Model at ", epoch)
             save_vanilla_model(config, camera_gen, camera_disc,  optimizer_camera_gen, optimizer_camera_disc, epoch)
