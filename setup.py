@@ -9,5 +9,5 @@ from setuptools import setup
 
 setup(
     name='Sensorgan',
-    packages=['utils', 'utils.core', 'utils.data', 'utils.helpers']
+    packages=['utils', 'utils.core', 'utils.data', 'utils.helpers', 'utils.models']
 )

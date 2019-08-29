@@ -18,7 +18,7 @@ class LidarAndCameraDataset(Dataset):
         self.multip = np.ones((5,375,1242))
 
         if self.model == "pix2pix":
-
+            print("pix2pix dataset loading")
             self.multip[0] = self.multip[0] * 0
             self.multip[1] = self.multip[1] * 1
             self.multip[2] = self.multip[2] * 2
@@ -39,6 +39,7 @@ class LidarAndCameraDataset(Dataset):
                         self.rgb_dataset.append(current_rgb)
 
         elif self.model == "baseline":
+            print("baseline dataset loading")
             self.multip[0] = self.multip[0] * 0
             self.multip[1] = self.multip[1] * 1
             self.multip[2] = self.multip[2] * 1

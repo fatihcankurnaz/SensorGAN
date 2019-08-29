@@ -1,34 +1,11 @@
 NUM_GPUS: 2
-MODEL: "baseline"
 TEST:
+  LOAD_LIDAR_TO_CAM_WEIGHTS: "/home/fatih/my_git/sensorgan/outputs/saved_models/4.pth"
+  LOAD_PIX2PIX_WEIGHTS: "/home/fatih/my_git/sensorgan/outputs/pipx_yedk/normalized_0.9true_input1d_nonnormal_55"
   LOAD_BASELINE_WEIGHTS: "/home/fatih/my_git/sensorgan/outputs/baseline_models/4.pth"
-DATALOADER:
-  WORKERS: 4
-  SHUFFLE: True
-  PIX2PIX: True
-  RGB_PATH: "/SPACE/DATA/KITTI_Data/KITTI_raw_data/kitti/2011_09_26"
-  SEGMENTED_PATH: "/home/fatih/Inputs/LidarData"
-CAMERA_GENERATOR:
-  BASE_LR: 0.0002
-  STEP_SIZE: 100
-  STEP_GAMMA: 0.5
-  PIXEL_LAMBDA: 100
-CAMERA_DISCRIMINATOR:
-  BASE_LR: 0.00002
-  STEP_SIZE: 20
-  STEP_GAMMA: 0.5
-TRAIN:
-  BETA1: 0.5
-  BETA2: 0.999
-  LAMBDA_GP: 10
-  BATCH_SIZE: 8
-  SAVE_AT: 1
-  START_EPOCH: 0
-  MAX_EPOCH: 100
-  LOAD_WEIGHTS: ""
-  SAVE_WEIGHTS: "/home/fatih/my_git/sensorgan/outputs/baseline_models/"
-  DISCRIMINATOR_CRITERION_REDUCTION: "mean"
-  CYCLE_LOSS_REDUCTION: "mean"
-  EXAMPLE_SAVE_PATH: "/home/fatih/my_git/sensorgan/outputs/baseline_examples/"
-  GRAPH_SAVE_PATH: "/home/fatih/my_git/sensorgan/outputs/baseline_graphs/"
-OUTPUT_DIR: ""
+  INPUT_DIR: "/home/fatih/Inputs/TEST"
+  SEGMENTED_LIDAR_ROOT: "/home/fatih/Inputs/TEST/2011_09_26_drive_0086_sync_lid"
+  SEGMENTED_CAMERA_ROOT: "/home/fatih/Inputs/TEST/2011_09_26_drive_0086_sync_cam"
+  CLOUD_ROOT: "/SPACE/DATA/KITTI_Data/KITTI_labeledPC_with_BBs/2011_09_26"
+  RGB_ROOT: "/SPACE/DATA/KITTI_Data/KITTI_raw_data/kitti/2011_09_26"
+  RESULT_SAVE_PATH: "/home/fatih/my_git/sensorgan/outputs/baseline_eval_result"

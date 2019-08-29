@@ -68,6 +68,13 @@ config.TEST = EasyDict()
 config.TEST.LOAD_LIDAR_TO_CAM_WEIGHTS = "/home/fatih/my_git/sensorgan/outputs/saved_models/4.pth"
 config.TEST.LOAD_PIX2PIX_WEIGHTS = "/home/fatih/my_git/sensorgan/outputs/pipx_yedk/normalized_0.9true_input1d_nonnormal_55"
 config.TEST.LOAD_BASELINE_WEIGHTS = "/home/fatih/my_git/sensorgan/outputs/baseline_models/40.pth"
+config.TEST.SEGMENTED_LIDAR_ROOT = "/home/fatih/Inputs/2011_09_26_drive_0046_sync_lid"
+config.TEST.SEGMENTED_CAMERA_ROOT = "/home/fatih/Inputs/2011_09_26_drive_0046_sync_cam"
+config.TEST.CLOUD_ROOT = "/SPACE/DATA/KITTI_Data/KITTI_labeledPC_with_BBs/2011_09_26/2011_09_26_drive_0046_sync"
+config.TEST.RGB_ROOT = "/SPACE/DATA/KITTI_Data/KITTI_raw_data/kitti/2011_09_26/2011_09_26_drive_0046_sync/image_02/data"
+config.TEST.RESULT_SAVE_PATH = "/home/fatih/my_git/sensorgan/outputs/eval_result"
+config.TEST.INPUT_DIR = "/home/fatih/Inputs/TEST"
+
 
 def fix_the_type(desired_type, given_type):
     if type(desired_type) == type(given_type):

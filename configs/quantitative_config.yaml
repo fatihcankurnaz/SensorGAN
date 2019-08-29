@@ -6,6 +6,6 @@ TEST:
   INPUT_DIR: "/home/fatih/Inputs/TEST"
   SEGMENTED_LIDAR_ROOT: "/home/fatih/Inputs/TEST/2011_09_26_drive_0086_sync_lid"
   SEGMENTED_CAMERA_ROOT: "/home/fatih/Inputs/TEST/2011_09_26_drive_0086_sync_cam"
-  CLOUD_ROOT: "/SPACE/DATA/KITTI_Data/KITTI_labeledPC_with_BBs/2011_09_26"
+  CLOUD_ROOT: "/SPACE/DATA/KITTI_Data/KITTI_labeledPC_with_BBs/2011_09_26/2011_09_26_drive_0086_sync"
   RGB_ROOT: "/SPACE/DATA/KITTI_Data/KITTI_raw_data/kitti/2011_09_26"
   RESULT_SAVE_PATH: "/home/fatih/my_git/sensorgan/outputs/eval_result"

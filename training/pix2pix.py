@@ -62,7 +62,7 @@ def train(dataloader, config, device):
     criterion_pixel = nn.L1Loss(reduction=config.TRAIN.DISCRIMINATOR_CRITERION_REDUCTION)
 
 
-    camera_gen = GeneratorAlternative(1, 3, config.NUM_GPUS).to(device)
+    camera_gen = Generator(1, 3, config.NUM_GPUS).to(device)
     camera_disc = PixelDiscriminator(3, 1, config.NUM_GPUS).to(device)
 
 
@@ -101,9 +101,9 @@ def train(dataloader, config, device):
     test_rgb1 = test_rgb1.to(device=device, dtype=torch.float)
     test_rgb1 = test_rgb1.view(1, 3, 375, 1242)
 
-    test_segmented1 = np.sum(np.load(test_segmented_path1)["data"].reshape(5, 375, 1242) * multip, axis=0).reshape(375,1242)
-    test_segmented1 = Image.fromarray(test_segmented1, 'L')
-    test_segmented1 = seg_transform(test_segmented1).view(1, 1, 375, 1242).to(device=device,
+    test_segmented1 = np.sum(np.load(test_segmented_path1)["data"].reshape(5, 375, 1242) * multip, axis=0).reshape(1, 1, 375,1242)
+    #test_segmented1 = Image.fromarray(test_segmented1, 'L')
+    test_segmented1 = torch.from_numpy(test_segmented1).view(1, 1, 375, 1242).to(device=device,
                                                                                                     dtype=torch.float)
 
     test_rgb2 = Image.open(test_rgb_path2)
@@ -134,6 +134,7 @@ def train(dataloader, config, device):
     #     print("done")
 
     for epoch in range(config.TRAIN.START_EPOCH, config.TRAIN.MAX_EPOCH):
+
         for current_batch, data in enumerate(dataloader, 0):
             if len(dataloader) - current_batch< config.TRAIN.BATCH_SIZE:
                 continue
@@ -198,30 +199,7 @@ def train(dataloader, config, device):
             camera_gen_losses.append(camera_gen_loss.item())
             camera_disc_losses.append(camera_disc_loss.item())
 
-            if epoch != 0  and current_batch == 0 :
-                with torch.no_grad():
-                    generated1 = camera_gen(test_segmented1.detach())
-                    save_image(generated1,
-                               filename=config.TRAIN.EXAMPLE_SAVE_PATH + str(epoch) + "_generated_rgb_1.png",
-                               normalize=True)
-                    # save_image(test_segmented1,
-                    #            filename= config.TRAIN.EXAMPLE_SAVE_PATH + str(epoch) + "_segmented_1.png",
-                    #            normalize=True)
-                    np.savez_compressed(config.TRAIN.EXAMPLE_SAVE_PATH + str(epoch) + "_segmented_1",
-                                        data=test_segmented1[-1].cpu().numpy())
-                    save_image(test_rgb1,
-                               filename=config.TRAIN.EXAMPLE_SAVE_PATH + "{0}_rgb_1.png".format(epoch),
-                               normalize=True)
-                    generated2 = camera_gen(test_segmented2.detach())
 
-                    save_image(generated2,
-                               filename=config.TRAIN.EXAMPLE_SAVE_PATH + str(epoch) + "_generated_rgb_2.png",
-                               normalize=True)
-                    np.savez_compressed(config.TRAIN.EXAMPLE_SAVE_PATH + str(epoch) + "_segmented_2",
-                                        data=test_segmented2[-1].cpu().numpy())
-                    save_image(test_rgb2,
-                               filename=config.TRAIN.EXAMPLE_SAVE_PATH + str(epoch) + "_rgb_2.png",
-                               normalize=True)
 
             del generated_camera_sample
             del segmented_sample, rgb_sample
@@ -253,6 +231,33 @@ def train(dataloader, config, device):
 
     #save_model(config, lidar_gen, camera_gen , lidar_disc , camera_disc, optimizer_lidar_gen,
     #           optimizer_camera_gen, optimizer_lidar_disc, optimizer_camera_disc )
+
+        if epoch != 0 :
+            with torch.no_grad():
+                generated1 = camera_gen(test_segmented1.detach())
+
+                save_image(generated1,
+                           filename=config.TRAIN.EXAMPLE_SAVE_PATH + str(epoch) + "_generated_rgb_1.png",
+                           normalize=True)
+                # save_image(test_segmented1,
+                #            filename= config.TRAIN.EXAMPLE_SAVE_PATH + str(epoch) + "_segmented_1.png",
+                #            normalize=True)
+                np.savez_compressed(config.TRAIN.EXAMPLE_SAVE_PATH + str(epoch) + "_segmented_1",
+                                    data=test_segmented1[-1].cpu().numpy())
+                save_image(test_rgb1,
+                           filename=config.TRAIN.EXAMPLE_SAVE_PATH + "{0}_rgb_1.png".format(epoch),
+                           normalize=True)
+                generated2 = camera_gen(test_segmented2.detach())
+
+                save_image(generated2,
+                           filename=config.TRAIN.EXAMPLE_SAVE_PATH + str(epoch) + "_generated_rgb_2.png",
+                           normalize=True)
+                np.savez_compressed(config.TRAIN.EXAMPLE_SAVE_PATH + str(epoch) + "_segmented_2",
+                                    data=test_segmented2[-1].cpu().numpy())
+                save_image(test_rgb2,
+                           filename=config.TRAIN.EXAMPLE_SAVE_PATH + str(epoch) + "_rgb_2.png",
+                           normalize=True)
+
         if epoch != 0 and epoch% config.TRAIN.SAVE_AT == 0 :
             print("Saving Model at ", epoch)
             save_vanilla_model(config, camera_gen, camera_disc,  optimizer_camera_gen, optimizer_camera_disc, epoch)

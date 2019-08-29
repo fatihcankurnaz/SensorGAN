@@ -62,10 +62,11 @@ if __name__ == "__main__":
         print("Generating, ",number)
         generated_rgb_1 = Image.open(path + str(number) + "_generated_rgb_1.png")
         rgb1 = Image.open(path + str(number) + "_rgb_1.png")
-        segmented1 = np.load("/home/fatih/Inputs/test/46segmented_0000000000.npz")["data"]
+        segmented1 = np.load(path + str(number) + "_segmented_1.npz")["data"][0]
+
         generated_rgb_2 = Image.open(path + str(number) + "_generated_rgb_2.png")
         rgb2 = Image.open(path + str(number) + "_rgb_2.png")
-        segmented2 = np.load("/home/fatih/Inputs/test/01segmented_0000000000.npz")["data"]
+        segmented2 = np.load(path + str(number) + "_segmented_2.npz")["data"][0]
 
 
 
@@ -78,7 +79,7 @@ if __name__ == "__main__":
 
         plt.subplot(3, 2, 1)
         plt.title("Given Segmented 1")
-        plt.imshow(color.label2rgb(turn_back_to_oneD(segmented1, options),
+        plt.imshow(color.label2rgb(segmented1,
                                    colors=colors))
         plt.axis("off")
 
@@ -107,7 +108,7 @@ if __name__ == "__main__":
         plt.subplot(3, 2, 2)
         plt.title("Given Segmented 2")
 
-        plt.imshow(color.label2rgb(turn_back_to_oneD(segmented2, options),
+        plt.imshow(color.label2rgb(segmented2,
                                    colors=colors))
         plt.axis("off")
 
