@@ -82,6 +82,7 @@ def baseline_eval(config, device):
         cloud_root = join(config.TEST.CLOUD_ROOT, dir)
         for file in sorted(listdir(segmented_lidar_root)):
             print(file)
+
             segmented_lidar_path = join(segmented_lidar_root, file)
             segmented_lidar_numpy = np.load(segmented_lidar_path)["data"].reshape(5, 375, 1242)*multip
             segmented_1D = np.sum(segmented_lidar_numpy, axis=0).reshape(375,1242)

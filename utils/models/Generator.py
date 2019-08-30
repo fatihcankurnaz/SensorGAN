@@ -46,7 +46,7 @@ class UNetUp(nn.Module):
 
         return x
 
-
+#Sigmoid2d
 class GeneratorLowParameter(nn.Module):
     def __init__(self, in_channels=5, out_channels=3, ngpu = 2):
         super(GeneratorLowParameter, self).__init__()
@@ -95,7 +95,7 @@ class GeneratorLowParameter(nn.Module):
         u7 = self.up7(u6, d1)
         return self.final(u7)
 
-
+#Original
 class Generator(nn.Module):
     def __init__(self, in_channels=5, out_channels=3, ngpu = 2):
         super(Generator, self).__init__()
@@ -186,7 +186,7 @@ class Generator(nn.Module):
         # u7 = self.up7(u6, d1)
         # return self.final(u7)
 
-
+# Some layers removed
 class GeneratorAlternative(nn.Module):
     def __init__(self, in_channels=5, out_channels=3, ngpu = 2):
         super(GeneratorAlternative, self).__init__()

@@ -4,7 +4,6 @@
     * python setup.py install (DO IT INSIDE OF AN VIRTUALENV)
 
 * to delete installation 
-    * python setup.py develop --uninstall
     * python setup.py clean --all
 * 0633 - 0009-0297
 * 6830 - 0046-0071

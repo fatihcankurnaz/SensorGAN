@@ -231,6 +231,12 @@ def train(dataloader, config, device):
 
     #save_model(config, lidar_gen, camera_gen , lidar_disc , camera_disc, optimizer_lidar_gen,
     #           optimizer_camera_gen, optimizer_lidar_disc, optimizer_camera_disc )
+        ############################################
+        ############################################
+        ## TODO
+        ##  CHECK THIS PART MIGHT BE FAULTY CODE AND INPUTS
+        ############################################
+        ############################################
 
         if epoch != 0 :
             with torch.no_grad():

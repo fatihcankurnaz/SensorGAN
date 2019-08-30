@@ -164,6 +164,7 @@ def eval(config, device):
             plt.close()
             image_count += 1
 
+            del segmented_lidar_torch, generated_rgb_input
 
 
 
