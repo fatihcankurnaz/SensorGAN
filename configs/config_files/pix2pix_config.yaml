@@ -1,0 +1,37 @@
+NUM_GPUS: [0,1]
+MODEL: "pix2pix"
+DATALOADER:
+  WORKERS: 4
+  SHUFFLE: True
+  PIX2PIX: True
+  RGB_PATH: "/SPACE/DATA/KITTI_Data/KITTI_raw_data/kitti/2011_09_26"
+  SEGMENTED_PATH: "/home/tiago/Documents/Inputs/CameraData"
+CAMERA_GENERATOR:
+  BASE_LR: 0.0002
+  STEP_SIZE: 100
+  STEP_GAMMA: 0.5
+  PIXEL_LAMBDA: 100
+CAMERA_DISCRIMINATOR:
+  BASE_LR: 0.00001
+  STEP_SIZE: 20
+  STEP_GAMMA: 0.5
+TRAIN:
+  BETA1: 0.5
+  BETA2: 0.999
+  LAMBDA_GP: 10
+  BATCH_SIZE: 8
+  SAVE_AT: 2
+  START_EPOCH: 0
+  MAX_EPOCH: 100
+  LOAD_WEIGHTS: "/home/tiago/Documents/my_git/sensorgan/outputs/pipx_yedk/normalized_0.9true_input1d_nonnormal_55"
+  SAVE_WEIGHTS: "/home/tiago/Documents/my_git/sensorgan/outputs/pix2pix_saved_models/"
+  DISCRIMINATOR_CRITERION_REDUCTION: "mean"
+  CYCLE_LOSS_REDUCTION: "mean"
+  EXAMPLE_SAVE_PATH: "/home/tiago/Documents/my_git/sensorgan/outputs/pix2pix_examples/"
+  GRAPH_SAVE_PATH: "/home/tiago/Documents/my_git/sensorgan/outputs/pix2pix_graphs/"
+OUTPUT_DIR: "output/"
+TEST:
+  FILES: {'1':"/SPACE/DATA/KITTI_Data/KITTI_raw_data/kitti/2011_09_26/2011_09_26_drive_0046_sync/image_02/data/0000000000.png",
+          '12':"/home/tiago/Documents/Inputs/test/46segmented_0000000000.npz",
+          '2':"/SPACE/DATA/KITTI_Data/KITTI_raw_data/kitti/2011_09_26/2011_09_26_drive_0001_sync/image_02/data/0000000000.png",
+          '22':"/home/tiago/Documents/Inputs/test/01segmented_0000000000.npz"}

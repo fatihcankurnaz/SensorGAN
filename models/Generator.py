@@ -5,8 +5,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-
-
 class UNetDown(nn.Module):
     def __init__(self, in_size, out_size, normalize=True, dropout=0.0):
         super(UNetDown, self).__init__()
@@ -41,14 +39,15 @@ class UNetUp(nn.Module):
         diffX = skip_input.size()[3] - x.size()[3]
 
         x = F.pad(x, (diffX // 2, diffX - diffX // 2,
-                        diffY // 2, diffY - diffY // 2))
+                      diffY // 2, diffY - diffY // 2))
         x = torch.cat((x, skip_input), 1)
 
         return x
 
 
+# Sigmoid2d
 class GeneratorLowParameter(nn.Module):
-    def __init__(self, in_channels=5, out_channels=3, ngpu = 2):
+    def __init__(self, in_channels=5, out_channels=3, ngpu=2):
         super(GeneratorLowParameter, self).__init__()
         self.ngpu = ngpu
         self.down1 = UNetDown(in_channels, 8, normalize=True)
@@ -69,13 +68,13 @@ class GeneratorLowParameter(nn.Module):
         self.up7 = UNetUp(32, 8)
 
         self.final = nn.Sequential(
-            nn.Upsample(size=(375,1242)),
+            nn.Upsample(size=(375, 1242)),
             nn.ZeroPad2d((1, 0, 1, 0)),
             nn.Conv2d(16, out_channels, 4, padding=1),
             nn.Softmax2d(),
         )
-    def forward(self, x):
 
+    def forward(self, x):
         # U-Net generator with skip connections from encoder to decoder
         d1 = self.down1(x)
         d2 = self.down2(d1)
@@ -96,8 +95,9 @@ class GeneratorLowParameter(nn.Module):
         return self.final(u7)
 
 
+# Original
 class Generator(nn.Module):
-    def __init__(self, in_channels=5, out_channels=3, ngpu = 2):
+    def __init__(self, in_channels=5, out_channels=3, ngpu=2):
         super(Generator, self).__init__()
         self.ngpu = ngpu
         # self.down1 = UNetDown(in_channels, 16, normalize=True)
@@ -142,7 +142,7 @@ class Generator(nn.Module):
         self.up7 = UNetUp(256, 64)
 
         self.final = nn.Sequential(
-            nn.Upsample(size=(375,1242)),
+            nn.Upsample(size=(375, 1242)),
             nn.ZeroPad2d((1, 0, 1, 0)),
             nn.Conv2d(128, out_channels, 4, padding=1),
             nn.Tanh(),
@@ -187,8 +187,9 @@ class Generator(nn.Module):
         # return self.final(u7)
 
 
+# Some layers removed
 class GeneratorAlternative(nn.Module):
-    def __init__(self, in_channels=5, out_channels=3, ngpu = 2):
+    def __init__(self, in_channels=5, out_channels=3, ngpu=2):
         super(GeneratorAlternative, self).__init__()
         self.ngpu = ngpu
         self.down1 = UNetDown(in_channels, 64, normalize=True)
@@ -214,8 +215,8 @@ class GeneratorAlternative(nn.Module):
             nn.Conv2d(128, out_channels, 4, padding=1),
             nn.Tanh(),
         )
-    def forward(self, x):
 
+    def forward(self, x):
         # U-Net generator with skip connections from encoder to decoder
         d1 = self.down1(x)
         d2 = self.down2(d1)

@@ -6,6 +6,7 @@ class PixelDiscriminatorLowParameter(nn.Module):
     def __init__(self, in_channels=5, out_channels=5, ngpu=2):
         super(PixelDiscriminatorLowParameter, self).__init__()
         self.ngpu = ngpu
+
         def discriminator_block(in_filters, out_filters, normalization=True):
             """Returns downsampling layers of each discriminator block"""
             layers = [nn.Conv2d(in_filters, out_filters, 4, stride=2, padding=1, bias=False)]
@@ -15,7 +16,7 @@ class PixelDiscriminatorLowParameter(nn.Module):
             return layers
 
         self.model = nn.Sequential(
-            *discriminator_block(in_channels + out_channels , 16, normalization=False),
+            *discriminator_block(in_channels + out_channels, 16, normalization=False),
             *discriminator_block(16, 32),
             *discriminator_block(32, 64),
             *discriminator_block(64, 128),
@@ -28,17 +29,16 @@ class PixelDiscriminatorLowParameter(nn.Module):
         # Concatenate image and condition image by channels to produce input
         img_input = torch.cat((img_A, img_B), 1)
 
-        #print(output.shape)
+        # print(output.shape)
 
         return self.model(img_input)
-
-
 
 
 class PixelDiscriminator(nn.Module):
     def __init__(self, in_channels=5, out_channels=5, ngpu=2):
         super(PixelDiscriminator, self).__init__()
         self.ngpu = ngpu
+
         def discriminator_block(in_filters, out_filters, normalization=True, dropout=0.0):
             """Returns downsampling layers of each discriminator block"""
             layers = [nn.Conv2d(in_filters, out_filters, 4, stride=2, padding=1, bias=True)]
@@ -50,7 +50,7 @@ class PixelDiscriminator(nn.Module):
             return layers
 
         self.model = nn.Sequential(
-            *discriminator_block(in_channels + out_channels , 64, normalization=False, dropout=0.5),
+            *discriminator_block(in_channels + out_channels, 64, normalization=False, dropout=0.5),
             *discriminator_block(64, 128, dropout=0.5),
             *discriminator_block(128, 256, dropout=0.5),
             *discriminator_block(256, 512, dropout=0.5),
@@ -63,7 +63,6 @@ class PixelDiscriminator(nn.Module):
         # Concatenate image and condition image by channels to produce input
         img_input = torch.cat((img_A, img_B), 1)
 
-        #print(output.shape)
+        # print(output.shape)
 
         return self.model(img_input)
-

@@ -86,34 +86,34 @@ def fixer(input):
                 input[0][i][j] = 1
 
             elif input[0][i][j] == 1:
-                input[0][i][j] = 5
+                input[0][i][j] = 0
 
             elif input[0][i][j] == 2:
-                input[0][i][j] = 5
+                input[0][i][j] = 0
 
             elif input[0][i][j] == 3:
-                input[0][i][j] = 5
+                input[0][i][j] = 0
 
             elif input[0][i][j] == 4:
-                input[0][i][j] = 5
+                input[0][i][j] = 0
 
             elif input[0][i][j] == 5:
-                input[0][i][j] = 5
+                input[0][i][j] = 0
 
             elif input[0][i][j] == 6:
-                input[0][i][j] = 5
+                input[0][i][j] = 0
 
             elif input[0][i][j] == 7:
-                input[0][i][j] = 5
+                input[0][i][j] = 0
 
             elif input[0][i][j] == 8:
-                input[0][i][j] = 5
+                input[0][i][j] = 0
 
             elif input[0][i][j] == 9:
-                input[0][i][j] = 5
+                input[0][i][j] = 0
 
             elif input[0][i][j] == 10:
-                input[0][i][j] = 5
+                input[0][i][j] = 0
 
             elif input[0][i][j] == 11:
                 input[0][i][j] = 3

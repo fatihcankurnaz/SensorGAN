@@ -1,10 +1,11 @@
-NUM_GPUS: 2
+NUM_GPUS: [0,1]
+MODEL: 'lidar2cam_new_loss'
 DATALOADER:
   WORKERS: 4
   SHUFFLE: True
   PIX2PIX: False
-  LIDAR_DATA_PATH: "/home/fatih/Inputs/LidarData"
-  CAMERA_DATA_PATH: "/home/fatih/Inputs/CameraData"
+  LIDAR_DATA_PATH: "/home/tiago/Documents/Inputs/LidarData"
+  CAMERA_DATA_PATH: "/home/tiago/Documents/Inputs/CameraData"
 CAMERA_GENERATOR:
   BASE_LR: 0.0002
   STEP_SIZE: 50
@@ -24,9 +25,9 @@ TRAIN:
   START_EPOCH: 0
   MAX_EPOCH: 100
   LOAD_WEIGHTS: ""
-  SAVE_WEIGHTS: "/home/fatih/my_git/sensorgan/outputs/saved_models/"
+  SAVE_WEIGHTS: "/home/tiago/Documents/my_git/sensorgan/outputs/saved_models/"
   DISCRIMINATOR_CRITERION_REDUCTION: "mean"
   CYCLE_LOSS_REDUCTION: "mean"
-  EXAMPLE_SAVE_PATH: "/home/fatih/my_git/sensorgan/outputs/new_loss_examples/"
-  GRAPH_SAVE_PATH: "/home/fatih/my_git/sensorgan/outputs/new_loss_graphs/"
+  EXAMPLE_SAVE_PATH: "/home/tiago/Documents/my_git/sensorgan/outputs/new_loss_examples/"
+  GRAPH_SAVE_PATH: "/home/tiago/Documents/my_git/sensorgan/outputs/new_loss_graphs/"
 OUTPUT_DIR: ""

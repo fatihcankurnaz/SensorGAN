@@ -1,0 +1,11 @@
+NUM_GPUS: [0,1]
+TEST:
+  LOAD_LIDAR_TO_CAM_WEIGHTS: "/home/tiago/Documents/my_git/sensorgan/outputs/saved_models/4.pth"
+  LOAD_PIX2PIX_WEIGHTS: "/home/tiago/Documents/my_git/sensorgan/outputs/pipx_yedk/normalized_0.9true_input1d_nonnormal_55"
+  LOAD_BASELINE_WEIGHTS: "/home/tiago/Documents/my_git/sensorgan/outputs/baseline_models/4.pth"
+  INPUT_DIR: "/home/tiago/Documents/Inputs/TEST"
+  SEGMENTED_LIDAR_ROOT: "/home/tiago/Documents/Inputs/TEST/2011_09_26_drive_0086_sync_lid"
+  SEGMENTED_CAMERA_ROOT: "/home/tiago/Documents/Inputs/TEST/2011_09_26_drive_0086_sync_cam"
+  CLOUD_ROOT: "/SPACE/DATA/KITTI_Data/KITTI_labeledPC_with_BBs/2011_09_26"
+  RGB_ROOT: "/SPACE/DATA/KITTI_Data/KITTI_raw_data/kitti/2011_09_26"
+  RESULT_SAVE_PATH: "/home/tiago/Documents/my_git/sensorgan/outputs/eval_result"
