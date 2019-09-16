@@ -1,0 +1,37 @@
+NUM_GPUS: [0,1]
+MODEL: "lidar2cam"
+DATALOADER:
+  WORKERS: 4
+  SHUFFLE: True
+  PIX2PIX: False
+  LIDAR_DATA_PATH: "/home/tiago/Documents/Inputs/LidarData"
+  CAMERA_DATA_PATH: "/home/tiago/Documents/Inputs/CameraData"
+CAMERA_GENERATOR:
+  BASE_LR: 0.0002
+  STEP_SIZE: 50
+  STEP_GAMMA: 0.5
+  PIXEL_LAMBDA: 100
+CAMERA_DISCRIMINATOR:
+  BASE_LR: 0.000005
+  STEP_SIZE: 50
+  STEP_GAMMA: 0.5
+TRAIN:
+  BETA1: 0.5
+  BETA2: 0.999
+  LAMBDA_GP: 10
+  BATCH_SIZE: 8
+  SAVE_AT: 5
+  START_EPOCH: 0
+  MAX_EPOCH: 100
+  LOAD_WEIGHTS: ""
+  SAVE_WEIGHTS: "/home/tiago/Documents/PycharmProjects/sensorgan/outputs/saved_models/"
+  DISCRIMINATOR_CRITERION_REDUCTION: "mean"
+  CYCLE_LOSS_REDUCTION: "mean"
+  EXAMPLE_SAVE_PATH: "/home/tiago/Documents/PycharmProjects/sensorgan/outputs/examples/"
+  GRAPH_SAVE_PATH: "/home/tiago/Documents/PycharmProjects/sensorgan/outputs/graphs/"
+OUTPUT_DIR: ""
+TEST:
+  FILES: {'1':"/home/tiago/Documents/Inputs/test/46cameraView_0000000000.npz",
+          '12':"/home/tiago/Documents/Inputs/test/46segmented_0000000000.npz",
+          '2':"/home/tiago/Documents/Inputs/test/01cameraView_0000000000.npz",
+          '22':"/home/tiago/Documents/Inputs/test/01segmented_0000000000.npz"}

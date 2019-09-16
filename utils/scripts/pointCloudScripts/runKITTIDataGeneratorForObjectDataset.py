@@ -3,11 +3,11 @@ import time
 
 import numpy as np
 import pickle
-import utils.helpers.PC2ImageConverter as PC2ImageConverter
+import utils.scripts.pointCloudScripts.PC2ImageConverter as PC2ImageConverter
 import matplotlib.pyplot as plt
 
 
-from utils.helpers.visualizer import Vis
+from utils.scripts.pointCloudScripts.visualizer import Vis
 
 def decomposeCloud(rawCloud, verbose=False):
     # decompose cloud
@@ -107,10 +107,10 @@ def processData(cloudName, bb3D_path, PC2ImgConv, outputFileName):
 
     # generate bird eye view image and cloud
     bevImage, bevCloud = PC2ImgConv.getBirdEyeViewImage(labeledPC, segValColIndex=5)
-    #print(" bevImage size  " + str(bevImage.shape))
+    print(" bevImage size  " + str(bevImage.shape))
 
     timeElapsed = time.time() - timeStart
-    #print(" bevImage generation took  " + str(timeElapsed))
+    print(" bevImage generation took  " + str(timeElapsed))
 
     if True:
         visualizer = Vis()
@@ -119,7 +119,7 @@ def processData(cloudName, bb3D_path, PC2ImgConv, outputFileName):
 
         if bb3D is not None:
             # decompose cloud into object clouds
-            backgrdCloud, roadCloud, vehCloud, pedCloud, cycCloud = decomposeCloud(colorizedPC, verbose=False)
+            backgrdCloud, roadCloud, vehCloud, pedCloud, cycCloud = decomposeCloud(colorizedPC, verbose=True)
 
             visualizer.showCloudsWithBBs(orgPC=backgrdCloud, fovPC=bevCloud,  roadPC=roadCloud,
                                          vehPC=vehCloud, pedPC=pedCloud, cycPC=cycCloud, bb3D=[],
@@ -132,7 +132,7 @@ def processData(cloudName, bb3D_path, PC2ImgConv, outputFileName):
             axes[r].set_axis_off()
             plt.axis('off')
 
-        plt.show()
+        #plt.show()
 
     if False:
         # print(type(bevImage[:,:,5]))

@@ -36,9 +36,9 @@ class PixelDiscriminatorLowParameter(nn.Module):
 
 
 class PixelDiscriminator(nn.Module):
-    def __init__(self, in_channels=5, out_channels=5, ngpu=2):
+    def __init__(self, in_channels=5, out_channels=5):
         super(PixelDiscriminator, self).__init__()
-        self.ngpu = ngpu
+
         def discriminator_block(in_filters, out_filters, normalization=True, dropout=0.0):
             """Returns downsampling layers of each discriminator block"""
             layers = [nn.Conv2d(in_filters, out_filters, 4, stride=2, padding=1, bias=True)]

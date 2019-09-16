@@ -97,9 +97,9 @@ class GeneratorLowParameter(nn.Module):
 
 #Original
 class Generator(nn.Module):
-    def __init__(self, in_channels=5, out_channels=3, ngpu = 2):
+    def __init__(self, in_channels=5, out_channels=3):
         super(Generator, self).__init__()
-        self.ngpu = ngpu
+
         # self.down1 = UNetDown(in_channels, 16, normalize=True)
         # self.down2 = UNetDown(16, 32)
         # self.down3 = UNetDown(32, 64)

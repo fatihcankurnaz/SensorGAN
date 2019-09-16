@@ -1,21 +1,24 @@
-from torch.utils.data import Dataset
-from scipy import misc
 from os import listdir
 from os.path import join
+
 import numpy as np
-import matplotlib.pyplot as plt
+import torch
 from PIL import Image
-from skimage import io, transform
+from torch.utils.data import Dataset
 from torchvision import transforms
-import matplotlib.pyplot as plt
 
 
 class LidarAndCameraDataset(Dataset):
     def __init__(self, config, transforms_=None, transform_seg=None):
+        if transform_seg is None:
+            transform_seg = [transforms.ToTensor()]
+        if transforms_ is None:
+            transforms_ = [transforms.ToTensor()]
         self.model = config.MODEL
         self.transform = transforms.Compose(transforms_)
         self.transform_seg = transforms.Compose(transform_seg)
-        self.multip = np.ones((5,375,1242))
+        self.multip = np.ones((5, 375, 1242))
+        self.config = config
 
         if self.model == "pix2pix":
             print("pix2pix dataset loading")
@@ -32,7 +35,7 @@ class LidarAndCameraDataset(Dataset):
             for dirs in self.dirs:
                 for file in sorted(listdir(join(self.segmented_path, dirs))):
                     current_segmented_dir = join(self.segmented_path, dirs)
-                    current_rgb_dir = join(self.rgb_path,dirs+"/image_02/data")
+                    current_rgb_dir = join(self.rgb_path, dirs + "/image_02/data")
                     current_rgb = join(current_rgb_dir, file.split(".")[0].split("segmented_")[1] + ".png")
                     if current_rgb != "/SPACE/DATA/KITTI_Data/KITTI_raw_data/kitti/2011_09_26/2011_09_26_drive_0056_sync/image_02/data/0000000102.png":
                         self.segmented_dataset.append(join(current_segmented_dir, file))
@@ -53,7 +56,7 @@ class LidarAndCameraDataset(Dataset):
             for dirs in self.dirs:
                 for file in sorted(listdir(join(self.segmented_path, dirs))):
                     current_segmented_dir = join(self.segmented_path, dirs)
-                    current_rgb_dir = join(self.rgb_path,dirs+"/image_02/data")
+                    current_rgb_dir = join(self.rgb_path, dirs + "/image_02/data")
                     current_rgb = join(current_rgb_dir, file.split(".")[0].split("cameraView_")[1] + ".png")
                     if current_rgb != "/SPACE/DATA/KITTI_Data/KITTI_raw_data/kitti/2011_09_26/2011_09_26_drive_0056_sync/image_02/data/0000000102.png":
                         self.segmented_dataset.append(join(current_segmented_dir, file))
@@ -81,43 +84,42 @@ class LidarAndCameraDataset(Dataset):
             try:
                 rgb_data = Image.open(self.rgb_dataset[idx])
                 rgb_data = self.transform(rgb_data)
-                #rgb_data = transforms.ToTensor()(rgb_data)
+                # rgb_data = transforms.ToTensor()(rgb_data)
                 segmented_data = np.load(self.segmented_dataset[idx])["data"].reshape(5, 375, 1242)
                 segmented_data = segmented_data * self.multip
                 segmented_data = np.sum(segmented_data, axis=0).reshape(1, 375, 1242)
+                return {"y": rgb_data, "x": segmented_data}
 
 
             except:
                 print("lel", idx, self.rgb_dataset[idx])
 
-            return {"rgb_data": rgb_data, "segmented_data": segmented_data}
+
 
         elif self.model == "baseline":
 
             try:
                 rgb_data = Image.open(self.rgb_dataset[idx])
-                rgb_data = self.transform(rgb_data)
-                #rgb_data = transforms.ToTensor()(rgb_data)
+                rgb_data = transforms.ToTensor()(rgb_data)
                 segmented_data = np.load(self.segmented_dataset[idx])["data"].reshape(5, 375, 1242)
                 segmented_data = segmented_data * self.multip
                 segmented_data = np.sum(segmented_data, axis=0).reshape(1, 375, 1242)
+                return {"y": rgb_data, "x": segmented_data}
 
 
 
             except:
                 print("lel", idx, self.rgb_dataset[idx])
 
-            return {"rgb_data": rgb_data, "segmented_data": segmented_data}
+
 
         else:
             try:
-                lidar_data = np.load(self.lidar_dataset[idx])["data"].reshape(5,375,1242)
-                camera_data = np.load(self.camera_dataset[idx])["data"].reshape(5,375,1242)
+                lidar_data = np.load(self.lidar_dataset[idx])["data"].reshape(5, 375, 1242)
+                camera_data = np.load(self.camera_dataset[idx])["data"].reshape(5, 375, 1242)
+                return {"y": lidar_data, "x": camera_data}
             except:
-                print("lel",idx,self.lidar_dataset[idx])
-            return {"lidar_data": lidar_data, "camera_data": camera_data}
-
-
+                print("lel", idx, self.lidar_dataset[idx])
 
 
     def __len__(self):
@@ -125,3 +127,41 @@ class LidarAndCameraDataset(Dataset):
             return len(self.segmented_dataset)
         else:
             return len(self.lidar_dataset)
+
+    def get_test(self):
+
+        test1 = self.config.TEST.FILES['1']
+        test12 = self.config.TEST.FILES['12']
+
+        test2 = self.config.TEST.FILES['2']
+        test22 = self.config.TEST.FILES['22']
+
+        test1 = Image.open(test1)
+        test2 = Image.open(test2)
+        test1 = self.transform(test1)
+        test2 = self.transform(test2)
+        test1 = test1.type(torch.float).cuda()
+        test2 = test2.type(torch.float).cuda()
+
+        if self.model == 'baseline' or self.model == 'pix2pix':
+            test1 = test1.view(1, 3, 375, 1242)
+            test2 = test2.view(1, 3, 375, 1242)
+            test12 = np.sum(np.load(test12)["data"].reshape(5, 375, 1242) * self.multip, axis=0). \
+                reshape(375, 1242)
+
+            test22 = np.sum(np.load(test22)["data"].reshape(5, 375, 1242) * self.multip, axis=0). \
+                reshape(375, 1242)
+            test12 = self.transform_seg(test12).view(1, 1, 375, 1242).type(torch.float).cuda()
+            test22 = self.transform_seg(test22).view(1, 1, 375, 1242).type(torch.float).cuda()
+            patch = (1, 375 // 2 ** 4, 1242 // 2 ** 4)
+            label_real = torch.cuda.FloatTensor(np.ones((self.config.TRAIN.BATCH_SIZE, *patch)))
+            label_fake = torch.cuda.FloatTensor(np.zeros((self.config.TRAIN.BATCH_SIZE, *patch)))
+        else:
+            test1 = test1.view(1, 5, 375, 1242)
+            test2 = test2.view(1, 5, 375, 1242)
+            test12 = torch.from_numpy(np.load(test12)["data"].reshape(1, 5, 375, 1242)).type(torch.float).cuda()
+            test22 = torch.from_numpy(np.load(test22)["data"].reshape(1, 5, 375, 1242)).type(torch.float).cuda()
+            label_real = torch.cuda.FloatTensor(np.ones((self.config.TRAIN.BATCH_SIZE, 1, 23, 77)))
+            label_fake = torch.cuda.FloatTensor(np.zeros((self.config.TRAIN.BATCH_SIZE, 1, 23, 77)))
+
+        return test1,test12,test2,test22,label_real,label_fake
