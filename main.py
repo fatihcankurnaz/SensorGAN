@@ -21,6 +21,8 @@ if __name__ == '__main__':
 
     parser.add_option('-e', '--eval-epoch', type='int', default=0)
 
+    parser.add_option('-d', '--display', type='int', default=0)
+
     options, args = parser.parse_args()
     load_config(options.config)
 
@@ -34,9 +36,10 @@ if __name__ == '__main__':
         attach_decorators(**ret_objs)
         ret_objs['trainer'].run(ret_objs['loader'], config.TRAIN.MAX_EPOCH)
     else:
-        if options.display:
+        if options.display != 0:
             pass
         else:
-            baseline_eval.main(options)
+            config.TEST.EVAL_EPOCH = options.eval_epoch
+            baseline_eval.baseline_eval(config)
 
 

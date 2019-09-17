@@ -50,8 +50,6 @@ def init(loader, dataset, config):
     #           Training Function               #
     #############################################
     def step(engine, batch):
-        ##Where depending of the model
-        ##X can either be lidar or rgb and y either rgb or segmented
         x, y = batch['x'], batch['y']
         x = x.type(torch.float).cuda()
         y = y.type(torch.float).cuda()

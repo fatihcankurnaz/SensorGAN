@@ -42,13 +42,13 @@ def baseline_eval(config):
                                                    maxImgWidth=256, maxImgDepth=64)
 
     input_dir = config.TEST.INPUT_DIR
-    if len (config.NUM_GPUS) != 0:
-        baseline_model = Generator(1, 3, config.NUM_GPUS).cuda()
+    if len(config.NUM_GPUS) != 0:
+        baseline_model = Generator(1, 3).cuda()
 
         if len(config.NUM_GPUS) > 1:
             baseline_model = nn.DataParallel(baseline_model, config.NUM_GPUS)
     else:
-        baseline_model = Generator(1, 3, config.NUM_GPUS)
+        baseline_model = Generator(1, 3)
 
 
     print("loading previous baseline model")
@@ -69,8 +69,8 @@ def baseline_eval(config):
     image_count = 0
     for dir in sorted(listdir(input_dir)):
         segmented_lidar_root = join(input_dir, dir + "/lidar")
-        rgb_root = join(config.TEST.RGB_ROOT, '')
-        cloud_root = join(config.TEST.CLOUD_ROOT, '')
+        rgb_root = join(config.TEST.RGB_ROOT, dir + "/image_02/data")
+        cloud_root = join(config.TEST.CLOUD_ROOT, dir)
         for file in sorted(listdir(segmented_lidar_root)):
             print(file)
 
@@ -131,12 +131,5 @@ def baseline_eval(config):
             del segmented_lidar_torch
 
 
-def main(opts):
-    load_config(opts.config)
-
-    baseline_eval(config)
 
 
-if __name__ == "__main__":
-    options, args = parser.parse_args()
-    main(options)

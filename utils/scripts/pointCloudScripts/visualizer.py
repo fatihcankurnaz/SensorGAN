@@ -1,7 +1,7 @@
 import numpy as np
 from mayavi import mlab
 import matplotlib.pyplot as plt
-
+mlab.options.offscreen = True
 # set parameters
 zoomFactor = 4.0  # 2.0
 pointSize = 0.3  # 0.2
