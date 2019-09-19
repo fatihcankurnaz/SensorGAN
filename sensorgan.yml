@@ -1,4 +1,4 @@
-name: torch
+name: sensorgan
 channels:
   - pytorch
   - conda-forge
