@@ -12,22 +12,66 @@ from ignite.contrib.handlers.tensorboard_logger import *
 
 def attach_decorators(trainer, config, loader, camera_gen_scheduler, camera_disc_scheduler, x1, y1, x2, y2,
                       camera_gen, camera_disc, optimizer_camera_gen, optimizer_camera_disc):
-    # tb_logger = TensorboardLogger(log_dir=config.OUTPUT_DIR + '/' + config.MODEL + "/tb_logs")
-    # tb_logger.attach(trainer,
-    #                  log_handler=OutputHandler(tag="training", output_transform=lambda x: {'Real_D': x['Real_D'],
-    #                                                                                        'Fake_D': x['Fake_D'],
-    #                                                                                        'Tot_D': x['Tot_D'],
-    #                                                                                        'GAN_G': x['GAN_G'],
-    #                                                                                        'Pixel_G': x['Pixel_G'],
-    #                                                                                        'Tot_G': x['Tot_G'],
-    #                                                                                        'D': x['D'],
-    #                                                                                        'D_G': x['D_G']
-    #                                                                                        }),
-    #                  event_name=Events.ITERATION_COMPLETED)
-    #
-    # tb_logger.attach(trainer,
-    #                  log_handler=OptimizerParamsHandler(optimizer),
-    #                  event_name=Events.ITERATION_STARTED)
+    tb_logger = TensorboardLogger(log_dir=config.OUTPUT_DIR + '/' + config.MODEL + "/tb_logs")
+    tb_logger.attach(trainer,
+                     log_handler=OutputHandler(tag="training", output_transform=lambda x: {'Real_D': x['Real_D'],
+                                                                                           'Fake_D': x['Fake_D'],
+                                                                                           'Tot_D': x['Tot_D'],
+                                                                                           'GAN_G': x['GAN_G'],
+                                                                                           'Pixel_G': x['Pixel_G'],
+                                                                                           'Tot_G': x['Tot_G'],
+                                                                                           'D': x['D'],
+                                                                                           'D_G': x['D_G']
+                                                                                           }),
+                     event_name=Events.ITERATION_COMPLETED)
+
+    # Attach the logger to the trainer to log optimizer's parameters, e.g. learning rate at each iteration
+    tb_logger.attach(trainer,
+                     log_handler=OptimizerParamsHandler(optimizer_camera_gen),
+                     event_name=Events.ITERATION_STARTED)
+
+    tb_logger.attach(trainer,
+                     log_handler=OptimizerParamsHandler(optimizer_camera_disc),
+                     event_name=Events.ITERATION_STARTED)
+
+    # Attach the logger to the trainer to log model's weights norm after each iteration
+    tb_logger.attach(trainer,
+                     log_handler=WeightsScalarHandler(camera_gen),
+                     event_name=Events.ITERATION_COMPLETED)
+
+    tb_logger.attach(trainer,
+                     log_handler=WeightsScalarHandler(camera_disc),
+                     event_name=Events.ITERATION_COMPLETED)
+
+    # Attach the logger to the trainer to log model's weights as a histogram after each epoch
+    tb_logger.attach(trainer,
+                     log_handler=WeightsHistHandler(camera_gen),
+                     event_name=Events.EPOCH_COMPLETED)
+
+    tb_logger.attach(trainer,
+                     log_handler=WeightsHistHandler(camera_disc),
+                     event_name=Events.EPOCH_COMPLETED)
+
+    # Attach the logger to the trainer to log model's gradients norm after each iteration
+    tb_logger.attach(trainer,
+                     log_handler=GradsScalarHandler(camera_gen),
+                     event_name=Events.ITERATION_COMPLETED)
+
+    tb_logger.attach(trainer,
+                     log_handler=GradsScalarHandler(camera_disc),
+                     event_name=Events.ITERATION_COMPLETED)
+
+    # Attach the logger to the trainer to log model's gradients as a histogram after each epoch
+    tb_logger.attach(trainer,
+                     log_handler=GradsHistHandler(camera_gen),
+                     event_name=Events.EPOCH_COMPLETED)
+
+    tb_logger.attach(trainer,
+                     log_handler=GradsHistHandler(camera_disc),
+                     event_name=Events.EPOCH_COMPLETED)
+
+    # We need to close the logger with we are done
+    tb_logger.close()
 
     @trainer.on(Events.EPOCH_COMPLETED)
     def plot_graphs(engine):
