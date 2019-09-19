@@ -1,7 +1,7 @@
 # SensorGAN
 
 * To setup the conda environment please do 
-    * conda env create -f sensorgan.yml
+    * conda env create -f sensorgan.yml (don't forget to change the field prefix at the end of sensorgan.yml to reflect your anacoda installation)
 * Don't forget to activate your new conda environment
     * conda activate sensorgan
 * 0633 - 0009-0297
