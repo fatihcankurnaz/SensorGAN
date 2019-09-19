@@ -1,10 +1,9 @@
 # SensorGAN
 
-* In order to make files under utils visible run
-    * python setup.py install (DO IT INSIDE OF AN VIRTUALENV)
-
-* to delete installation 
-    * python setup.py clean --all
+* To setup the conda environment please do 
+    * conda env create -f sensorgan.yml
+* Don't forget to activate your new conda environment
+    * conda activate sensorgan
 * 0633 - 0009-0297
 * 6830 - 0046-0071
 * 6831 - 0046-0072

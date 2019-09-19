@@ -7,18 +7,6 @@ from skimage import data, segmentation, color
 from skimage.future import graph
 import optparse
 
-parser = optparse.OptionParser()
-
-parser.add_option('-o', '--one', dest="num", action="store", type="int",
-                  help="display only one output")
-parser.add_option('-p', '--path', dest="path", action="store", type="string",
-                  help="path to the files and no ending \"/\" ")
-parser.add_option('-i', '--interval', dest="interval", action="store", type="string",
-                  help="give an interval of numbers ex 1-14")
-parser.add_option('-s', '--save', dest="save", action="store_true", default=False,
-                  help="save the generated visual, if this is selected nothing will be shown")
-parser.add_option('-v', '--verbose', dest="verbose", action="store_true", default=False,
-                  help="print more information")
 
 
 
@@ -38,8 +26,8 @@ def turn_back_to_oneD(data, options):
     return new_version.numpy()
 
 
-if __name__ == "__main__":
-    options, args = parser.parse_args()
+def display(options):
+
 
     path = options.path + "/"
 

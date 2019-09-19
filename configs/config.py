@@ -66,6 +66,7 @@ config.TRAIN.OUTPUT_FREQ = 5
 config.TRAIN.SAVE_WEIGHTS = "/saved_models"
 config.TRAIN.GRAPH_SAVE_PATH = "/plots"
 config.TRAIN.EXAMPLE_SAVE_PATH = "/generated"
+config.TRAIN.CONTINUE = 0
 
 
 config.TEST = EasyDict()
@@ -79,7 +80,7 @@ config.TEST.RGB_ROOT = "/SPACE/DATA/KITTI_Data/KITTI_raw_data/kitti/2011_09_26/2
 config.TEST.RESULT_SAVE_PATH = "/home/tiago/Documents/my_git/sensorgan/outputs/eval_result"
 config.TEST.INPUT_DIR = "/home/tiago/Documents/Inputs/TEST"
 config.TEST.FILES = {}
-config.TEST.EVAL_EPOCH = 2
+config.TEST.EVAL_EPOCH = 0
 
 
 def fix_the_type(desired_type, given_type):

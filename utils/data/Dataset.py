@@ -117,7 +117,7 @@ class LidarAndCameraDataset(Dataset):
             try:
                 lidar_data = np.load(self.lidar_dataset[idx])["data"].reshape(5, 375, 1242)
                 camera_data = np.load(self.camera_dataset[idx])["data"].reshape(5, 375, 1242)
-                return {"y": lidar_data, "x": camera_data}
+                return {"x": lidar_data, "y": camera_data}
             except:
                 print("lel", idx, self.lidar_dataset[idx])
 
@@ -136,14 +136,16 @@ class LidarAndCameraDataset(Dataset):
         test2 = self.config.TEST.FILES['2']
         test22 = self.config.TEST.FILES['22']
 
-        test1 = Image.open(test1)
-        test2 = Image.open(test2)
-        test1 = self.transform(test1)
-        test2 = self.transform(test2)
-        test1 = test1.type(torch.float).cuda()
-        test2 = test2.type(torch.float).cuda()
+
 
         if self.model == 'baseline' or self.model == 'pix2pix':
+            test1 = Image.open(test1)
+            test2 = Image.open(test2)
+            test1 = self.transform(test1)
+            test2 = self.transform(test2)
+            test1 = test1.type(torch.float).cuda()
+            test2 = test2.type(torch.float).cuda()
+
             test1 = test1.view(1, 3, 375, 1242)
             test2 = test2.view(1, 3, 375, 1242)
             test12 = np.sum(np.load(test12)["data"].reshape(5, 375, 1242) * self.multip, axis=0). \
@@ -157,8 +159,8 @@ class LidarAndCameraDataset(Dataset):
             label_real = torch.cuda.FloatTensor(np.ones((self.config.TRAIN.BATCH_SIZE, *patch)))
             label_fake = torch.cuda.FloatTensor(np.zeros((self.config.TRAIN.BATCH_SIZE, *patch)))
         else:
-            test1 = test1.view(1, 5, 375, 1242)
-            test2 = test2.view(1, 5, 375, 1242)
+            test1 = torch.from_numpy(np.load(test1)["data"].reshape(1, 5, 375, 1242)).type(torch.float).cuda()
+            test2 = torch.from_numpy(np.load(test2)["data"].reshape(1, 5, 375, 1242)).type(torch.float).cuda()
             test12 = torch.from_numpy(np.load(test12)["data"].reshape(1, 5, 375, 1242)).type(torch.float).cuda()
             test22 = torch.from_numpy(np.load(test22)["data"].reshape(1, 5, 375, 1242)).type(torch.float).cuda()
             label_real = torch.cuda.FloatTensor(np.ones((self.config.TRAIN.BATCH_SIZE, 1, 23, 77)))

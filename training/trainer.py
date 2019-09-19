@@ -1,10 +1,7 @@
-import os
-
 import torch
 import torch.optim as optim
 from ignite.engine import Engine
 from torch import nn
-from torchvision.utils import save_image
 
 from models.Discriminator import PixelDiscriminator
 from models.Generator import Generator
@@ -44,12 +41,44 @@ def init(loader, dataset, config):
                                                       step_size=config.CAMERA_DISCRIMINATOR.STEP_SIZE,
                                                       gamma=config.CAMERA_DISCRIMINATOR.STEP_GAMMA)
 
+    if config.TRAIN.CONTINUE != 0:
+        camera_gen_dict = torch.load(
+            config.OUTPUT_DIR + '/' + config.MODEL + config.TRAIN.SAVE_WEIGHTS + '/training_sensor_gen_{}.pth'.format(
+                config.TRAIN.CONTINUE))
+        camera_disc_dict = torch.load(
+            config.OUTPUT_DIR + '/' + config.MODEL + config.TRAIN.SAVE_WEIGHTS + '/training_sensor_disc_{}.pth'.format(
+                config.TRAIN.CONTINUE))
+        optimizer_camera_gen_dict = torch.load(
+            config.OUTPUT_DIR + '/' + config.MODEL + config.TRAIN.SAVE_WEIGHTS + '/training_optim_gen_{}.pth'.format(
+                config.TRAIN.CONTINUE))
+        optimizer_camera_disc_dict = torch.load(
+            config.OUTPUT_DIR + '/' + config.MODEL + config.TRAIN.SAVE_WEIGHTS + '/training_optim_disc_{}.pth'.format(
+                config.TRAIN.CONTINUE))
+
+        camera_gen.load_state_dict(camera_gen_dict)
+        camera_disc.load_state_dict(camera_disc_dict)
+        optimizer_camera_gen.load_state_dict(optimizer_camera_gen_dict)
+        optimizer_camera_disc.load_state_dict(optimizer_camera_disc_dict)
+
     x1, y1, x2, y2, label_real, label_fake = dataset.get_test()
 
     #############################################
     #           Training Function               #
     #############################################
     def step(engine, batch):
+        """
+
+        :param engine: part of ignite
+        :param batch: Is composed of:
+                        If Training pix2pix:
+                                y: rgb_data x: segmented_data
+                        If Training baseline:
+                                y: rgb_data x: segmented_data
+                        If Training lidar2cam (with or without new_loss):
+                                y: camera_data x: lidar_data
+        :return:
+        """
+
         x, y = batch['x'], batch['y']
         x = x.type(torch.float).cuda()
         y = y.type(torch.float).cuda()
@@ -71,7 +100,7 @@ def init(loader, dataset, config):
         camera_gen_loss_pixel = config.CAMERA_GENERATOR.PIXEL_LAMBDA * camera_gen_loss_pixel
 
         if config.MODEL == 'lidar2cam_new_loss':
-            lidar_mask = y * generated_camera_sample.detach()
+            lidar_mask = x * generated_camera_sample.detach()
             camera_lidar_point_loss = criterion_pixel(lidar_mask, generated_camera_sample)
             camera_lidar_point_loss = config.CAMERA_GENERATOR.NEW_LOSS_LAMBDA * camera_lidar_point_loss
             camera_gen_loss_pixel = camera_gen_loss_pixel + camera_lidar_point_loss

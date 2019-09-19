@@ -7,27 +7,30 @@ DATALOADER:
   LIDAR_DATA_PATH: "/home/tiago/Documents/Inputs/LidarData"
   CAMERA_DATA_PATH: "/home/tiago/Documents/Inputs/CameraData"
 CAMERA_GENERATOR:
-  BASE_LR: 0.0002
-  STEP_SIZE: 50
-  STEP_GAMMA: 0.5
   PIXEL_LAMBDA: 40
   NEW_LOSS_LAMBDA: 10
 CAMERA_DISCRIMINATOR:
   BASE_LR: 0.00001
-  STEP_SIZE: 50
+  STEP_SIZE: 20
   STEP_GAMMA: 0.5
 TRAIN:
   BETA1: 0.5
   BETA2: 0.999
   LAMBDA_GP: 10
-  BATCH_SIZE: 8
+  BATCH_SIZE: 16
   SAVE_AT: 1
   START_EPOCH: 0
   MAX_EPOCH: 100
   LOAD_WEIGHTS: ""
-  SAVE_WEIGHTS: "/home/tiago/Documents/my_git/sensorgan/outputs/saved_models/"
+  SAVE_WEIGHTS: "/saved_models"
   DISCRIMINATOR_CRITERION_REDUCTION: "mean"
   CYCLE_LOSS_REDUCTION: "mean"
-  EXAMPLE_SAVE_PATH: "/home/tiago/Documents/my_git/sensorgan/outputs/new_loss_examples/"
-  GRAPH_SAVE_PATH: "/home/tiago/Documents/my_git/sensorgan/outputs/new_loss_graphs/"
-OUTPUT_DIR: ""
+  EXAMPLE_SAVE_PATH: "/new_loss_examples"
+  GRAPH_SAVE_PATH: "/new_loss_graphs"
+TEST:
+  FILES: {'1':"/home/tiago/Documents/Inputs/test/46cameraView_0000000000.npz",
+          '12':"/home/tiago/Documents/Inputs/test/46segmented_0000000000.npz",
+          '2':"/home/tiago/Documents/Inputs/test/01cameraView_0000000000.npz",
+          '22':"/home/tiago/Documents/Inputs/test/01segmented_0000000000.npz"}
+  RESULT_SAVE_PATH: "/eval_result"
+  EVAL_EPOCH: 0

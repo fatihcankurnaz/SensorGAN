@@ -4,12 +4,31 @@ import numpy as np
 import torch
 from ignite.contrib.handlers import ProgressBar
 from ignite.engine import Events
-from ignite.handlers import Timer, ModelCheckpoint
+from ignite.handlers import Timer
+from utils.core.checkpoint import ModelCheckpoint
 from ignite.metrics import RunningAverage
+from ignite.contrib.handlers.tensorboard_logger import *
 
 
 def attach_decorators(trainer, config, loader, camera_gen_scheduler, camera_disc_scheduler, x1, y1, x2, y2,
                       camera_gen, camera_disc, optimizer_camera_gen, optimizer_camera_disc):
+    # tb_logger = TensorboardLogger(log_dir=config.OUTPUT_DIR + '/' + config.MODEL + "/tb_logs")
+    # tb_logger.attach(trainer,
+    #                  log_handler=OutputHandler(tag="training", output_transform=lambda x: {'Real_D': x['Real_D'],
+    #                                                                                        'Fake_D': x['Fake_D'],
+    #                                                                                        'Tot_D': x['Tot_D'],
+    #                                                                                        'GAN_G': x['GAN_G'],
+    #                                                                                        'Pixel_G': x['Pixel_G'],
+    #                                                                                        'Tot_G': x['Tot_G'],
+    #                                                                                        'D': x['D'],
+    #                                                                                        'D_G': x['D_G']
+    #                                                                                        }),
+    #                  event_name=Events.ITERATION_COMPLETED)
+    #
+    # tb_logger.attach(trainer,
+    #                  log_handler=OptimizerParamsHandler(optimizer),
+    #                  event_name=Events.ITERATION_STARTED)
+
     @trainer.on(Events.EPOCH_COMPLETED)
     def plot_graphs(engine):
         import pandas as pd
@@ -35,7 +54,8 @@ def attach_decorators(trainer, config, loader, camera_gen_scheduler, camera_disc
     timer = Timer(average=True)
 
     checkpoint_handler = ModelCheckpoint(config.OUTPUT_DIR + '/' + config.MODEL + config.TRAIN.SAVE_WEIGHTS, 'training',
-                                         save_interval=1, n_saved=config.TRAIN.MAX_EPOCH, require_empty=False)
+                                         save_interval=1, n_saved=config.TRAIN.MAX_EPOCH, require_empty=False,
+                                         iteration=config.TRAIN.CONTINUE)
 
     monitoring_metrics = ['Real_D', 'Fake_D', 'Tot_D', 'GAN_G', 'Pixel_G', 'Tot_G', 'D', 'D_G']
 
@@ -113,7 +133,7 @@ def attach_decorators(trainer, config, loader, camera_gen_scheduler, camera_disc
 
             if (engine.state.iteration - 1) % 200 == 0:
                 with torch.no_grad():
-                    fakeCamera1 = camera_gen(y1.detach())
+                    fakeCamera1 = camera_gen(x1.detach())
                     np.savez_compressed(
                         config.OUTPUT_DIR + '/' + config.MODEL + config.TRAIN.EXAMPLE_SAVE_PATH + '/' + str(
                             engine.state.epoch) + "_generated_camera_1",
@@ -121,13 +141,13 @@ def attach_decorators(trainer, config, loader, camera_gen_scheduler, camera_disc
                     np.savez_compressed(
                         config.OUTPUT_DIR + '/' + config.MODEL + config.TRAIN.EXAMPLE_SAVE_PATH + '/' + str(
                             engine.state.epoch) + "_lidar_1",
-                        data=y1[-1].cpu().numpy())
+                        data=x1[-1].cpu().numpy())
                     np.savez_compressed(
                         config.OUTPUT_DIR + '/' + config.MODEL + config.TRAIN.EXAMPLE_SAVE_PATH + '/' + str(
                             engine.state.epoch) + "_camera_1",
-                        data=x1[-1].cpu().numpy())
-                    fakeCamera2 = camera_gen(y2.detach())
+                        data=y1[-1].cpu().numpy())
 
+                    fakeCamera2 = camera_gen(x2.detach())
                     np.savez_compressed(
                         config.OUTPUT_DIR + '/' + config.MODEL + config.TRAIN.EXAMPLE_SAVE_PATH + '/' + str(
                             engine.state.epoch) + "_generated_camera_2",
@@ -135,11 +155,11 @@ def attach_decorators(trainer, config, loader, camera_gen_scheduler, camera_disc
                     np.savez_compressed(
                         config.OUTPUT_DIR + '/' + config.MODEL + config.TRAIN.EXAMPLE_SAVE_PATH + '/' + str(
                             engine.state.epoch) + "_lidar_2",
-                        data=y2[-1].cpu().numpy())
+                        data=x2[-1].cpu().numpy())
                     np.savez_compressed(
                         config.OUTPUT_DIR + '/' + config.MODEL + config.TRAIN.EXAMPLE_SAVE_PATH + '/' + str(
                             engine.state.epoch) + "_camera_2",
-                        data=x2[-1].cpu().numpy())
+                        data=y2[-1].cpu().numpy())
 
     @trainer.on(Events.ITERATION_COMPLETED)
     def print_logs(engine):
@@ -164,3 +184,9 @@ def attach_decorators(trainer, config, loader, camera_gen_scheduler, camera_disc
                 message += ' | {name}: {value}'.format(name=name, value=value)
 
             pbar.log_message(message)
+
+    @trainer.on(Events.STARTED)
+    def loaded(engine):
+        if config.TRAIN.CONTINUE != 0:
+            engine.state.epoch = config.TRAIN.CONTINUE
+            engine.state.iteration = config.TRAIN.CONTINUE * len(loader)
