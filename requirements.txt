@@ -1,6 +1,6 @@
 Pillow==5.2.0
 pandas==0.24.0
-numpy==1.14.5
+numpy==1.22.0
 matplotlib==2.2.2
 easydict==1.9
 scikit-image==0.14.0
